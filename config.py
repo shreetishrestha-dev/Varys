@@ -15,3 +15,5 @@ REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT")
 LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
 LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2", "true")
 LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "Varys")
+
+DB_CONNECTION_URL = os.getenv("DB_CONNECTION_URL", "sqlite:///./data/mentions.db")

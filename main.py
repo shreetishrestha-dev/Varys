@@ -15,4 +15,5 @@ if args.scrape:
     run_scraping_for_company(company=args.company, limit=args.limit)
 run_info_gathering(company=args.company)
 
+preprocess_mentions(company=args.company)
 print(f"✅ Pipeline completed for {args.company}")

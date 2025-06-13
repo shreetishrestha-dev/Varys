@@ -1,0 +1,1 @@
+"Analyze the sentiment (positive, neutral, negative) of this text:\n\n{text}\nSentiment:"

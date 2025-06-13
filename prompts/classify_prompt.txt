@@ -1,0 +1,9 @@
+Classify this as one of the following types:
+- question
+- opinion
+- complaint
+- praise
+- other
+
+Text: {text}
+Type:

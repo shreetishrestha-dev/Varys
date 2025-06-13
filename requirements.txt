@@ -1,0 +1,9 @@
+langchain
+openai
+chromadb
+pandas
+beautifulsoup4
+scrapy
+tiktoken
+requests
+fastapi

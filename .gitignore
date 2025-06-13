@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+
+# Virtual environments
+.env
+varys-venv/
+venv/
+env/
+
+# Pipenv
+Pipfile.lock
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# LangChain / Chroma / FAISS
+embeddings/vector_store/
+*.chroma/
+*.faiss/
+
+# Datasets
+data/raw/
+data/processed/

@@ -17,7 +17,7 @@ def insert_mention(data: Mention) -> str:
             metadata={"company": data.company, "type": data.type, "sentiment": data.sentiment, "keywords": data.keywords},
             tags=["tool", "db", "insert"]
         ):
-            with engine.begin() as conn:  # Use begin() for transaction
+            with engine.begin() as conn:
                 result = conn.execute(
                     text("SELECT 1 FROM mentions WHERE company = :company AND text = :text LIMIT 1"),
                     {"company": data.company, "text": data.text}

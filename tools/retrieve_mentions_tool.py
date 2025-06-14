@@ -35,4 +35,12 @@ def retrieve_mentions(company: str, type: str = None, sentiment: str = None, key
     with engine.connect() as conn:
         results = conn.execute(text(query), params).fetchall()
 
-    return [dict(row._mapping) for row in results]
+    seen_texts = set()
+    unique_results = []
+    for row in results:
+        text_content = row._mapping["text"]
+        if text_content not in seen_texts:
+            seen_texts.add(text_content)
+            unique_results.append(dict(row._mapping))
+
+    return unique_results

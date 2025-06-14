@@ -5,7 +5,17 @@ from tools.retrieve_mentions_tool import retrieve_mentions
 from sqlalchemy import text
 from services.db_setup import engine
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def index():

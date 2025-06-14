@@ -19,14 +19,17 @@ def populate_mentions(company: str):
     ):
         for i, mention in enumerate(mentions):
             print(f"\n🔄 Inserting mention {i+1}/{len(mentions)}...")
-            mention["company"] = company 
+            mention["company"] = company
             if isinstance(mention.get("keywords"), str):
                 mention["keywords"] = [kw.strip() for kw in mention["keywords"].split(",")]
 
-            parsed = Mention(**mention)
-            with trace(
-                name="insert_single_mention",
-                metadata={"mention_index": i, "company": parsed.company, "type": parsed.type},
-                tags=["mention", "insert"]
-            ):
-                agent_executor.invoke({"input": str(parsed)})
+            try:
+                parsed = Mention(**mention)
+                with trace(
+                    name="insert_single_mention",
+                    metadata={"mention_index": i, "company": parsed.company, "type": parsed.type},
+                    tags=["mention", "insert"]
+                ):
+                    agent_executor.invoke({"input": parsed.model_dump()})
+            except Exception as e:
+                print(f"❌ Failed to insert mention {i+1}: {e}")

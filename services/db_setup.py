@@ -21,7 +21,4 @@ def create_mentions_table():
             rating FLOAT
         )
         """))
-        conn.execute(text("""
-            ALTER TABLE mentions ADD CONSTRAINT unique_company_text UNIQUE (company, text);
-        """))
         conn.commit()

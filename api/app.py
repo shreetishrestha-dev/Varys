@@ -79,3 +79,28 @@ def chat_with_rag(input: ChatInput):
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Vectorstore not found for this company.")
     return {"answer": answer}
+
+@app.get("/keywords-breakdown")
+def keywords_breakdown(company: str):
+    query = """
+        SELECT keywords
+        FROM mentions
+        WHERE company = :company
+    """
+    with engine.connect() as conn:
+        result = conn.execute(text(query), {"company": company}).fetchall()
+        keywords = []
+        for row in result:
+            keywords.extend(row[0] if isinstance(row[0], list) else [])
+        from collections import Counter
+        counter = Counter(keywords)
+        return [{"keyword": k, "count": v} for k, v in counter.most_common()]
+
+@app.get("/companies")
+def get_companies():
+    query = """
+        SELECT DISTINCT company FROM mentions
+    """
+    with engine.connect() as conn:
+        result = conn.execute(text(query)).fetchall()
+        return [row[0] for row in result]

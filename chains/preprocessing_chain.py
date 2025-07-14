@@ -12,11 +12,15 @@ translate_prompt = load_prompt("prompts/translate_prompt.txt")
 classify_prompt = load_prompt("prompts/classify_prompt.txt")
 sentiment_prompt = load_prompt("prompts/sentiment_prompt.txt")
 keywords_prompt = load_prompt("prompts/keywords_prompt.txt")
+focus_company_prompt = load_prompt("prompts/focus_company_prompt.txt")
 
-preprocessing_chain = RunnableMap({
-    "translated": translate_prompt | llm,
-    "type": classify_prompt | llm,
-    "sentiment": sentiment_prompt | llm,
-    "keywords": keywords_prompt | llm
-})
+def get_preprocessing_chain(company_name):
+    focused_prompt = focus_company_prompt.partial(company_name=company_name)
+    return RunnableMap({
+        "translated": translate_prompt | llm,
+        "focused_review": focused_prompt | llm,
+        "type": classify_prompt | llm,
+        "sentiment": sentiment_prompt | llm,
+        "keywords": keywords_prompt | llm
+    })
 

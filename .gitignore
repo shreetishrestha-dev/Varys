@@ -46,3 +46,5 @@ embeddings/vector_store/
 # Datasets
 data/raw/
 data/processed/
+
+vectorstores/

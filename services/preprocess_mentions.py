@@ -1,6 +1,6 @@
 import json
 from tqdm import tqdm
-from chains.preprocessing_chain import preprocessing_chain
+from chains.preprocessing_chain import get_preprocessing_chain
 from langsmith import trace
 from config import LANGSMITH_PROJECT
 
@@ -23,13 +23,14 @@ def preprocess_mentions(company: str):
         tags=["preprocessing", "mentions"],
         project_name=LANGSMITH_PROJECT,
     ):
+        chain = get_preprocessing_chain(company)
         for item in tqdm(data, desc="Preprocessing"):
             with trace(
                 name="preprocess_single_mention",
                 metadata={"mention_id": item.get("id"), "text": item.get("text")},
                 tags=["mention"],
             ):
-                result = preprocessing_chain.invoke({"text": item["text"]})
+                result = chain.invoke({"text": item["text"]})
                 cleaned = {key: value.content if hasattr(value, "content") else value for key, value in result.items()}
                 enriched.append({**item, **cleaned})
 

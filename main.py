@@ -3,6 +3,8 @@ from scrapers.run_scraping import run_scraping_for_company
 from services.run_pipeline import run_info_gathering
 from services.preprocess_mentions import preprocess_mentions
 from services.populate_mentions_agentically import populate_mentions
+from services.rag.retriever import get_company_retriever
+
 
 parser = argparse.ArgumentParser(description="Company Review Summarizer CLI")
 parser.add_argument("company", help="Company name to search for")
@@ -11,6 +13,8 @@ parser.add_argument("--scrape", action="store_true", default=False, help="Run sc
 parser.add_argument("--gather", action="store_true", default=False, help="Gather mentions from scraped data")
 parser.add_argument("--preprocess", action="store_true", default=False, help="Run preprocessing on mentions")
 parser.add_argument("--populate-agent", action="store_true", default=False, help="Populate DB with enriched mentions via agent")
+parser.add_argument("--embed", action="store_true", default=False, help="Build vector store from DB")
+parser.add_argument("--rag-retriever", action="store_true", default=False, help="Run RAG retriever for the company")
 
 args = parser.parse_args()
 
@@ -25,5 +29,9 @@ if args.preprocess:
 
 if args.populate_agent:
     populate_mentions(company=args.company)
+
+if args.embed:
+    from services.embed_mentions_from_db import build_vectorstore_from_db
+    build_vectorstore_from_db(company=args.company)
 
 print(f"✅ Pipeline completed for {args.company}")

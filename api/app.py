@@ -1,6 +1,9 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from typing import Optional
 from tools.retrieve_mentions_tool import retrieve_mentions
+from pydantic import BaseModel
+from services.rag.chat import get_rag_response
+
 
 from sqlalchemy import text
 from services.db_setup import engine
@@ -64,3 +67,15 @@ def mention_type_breakdown(company: str):
     with engine.connect() as conn:
         result = conn.execute(text(query), {"company": company}).fetchall()
         return [{"type": row[0], "count": row[1]} for row in result]
+    
+class ChatInput(BaseModel):
+    company: str
+    query: str
+
+@app.post("/chat")
+def chat_with_rag(input: ChatInput):
+    try:
+        answer = get_rag_response(company=input.company, query=input.query)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Vectorstore not found for this company.")
+    return {"answer": answer}

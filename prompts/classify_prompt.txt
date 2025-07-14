@@ -1,9 +1,27 @@
-Classify this as one of the following types:
+Classify the following text into one of these types:
 - question
 - opinion
 - complaint
 - praise
 - other
+
+Questions may not always have question marks. Use the sentiment of the sentence if available to help with classification.
+
+Examples:
+Input: "Is there any growth opportunity in this company?"
+Type: question
+
+Input: "I think the management could be better."
+Type: opinion
+
+Input: "Salary was very low and management was unhelpful."
+Type: complaint
+
+Input: "The team is very supportive and the work culture is great."
+Type: praise
+
+Input: "I joined last year."
+Type: other
 
 Text: {text}
 Type:

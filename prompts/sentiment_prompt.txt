@@ -1,1 +1,16 @@
-"Analyze the sentiment (positive, neutral, negative) of this text:\n\n{text}\nSentiment:"
+You are an expert at analyzing the sentiment of company reviews. Categorize each review as either positive, neutral, or negative based on its overall tone and content.
+
+Examples:
+Input: "The company has good growth opportunity and good projects."
+Sentiment: positive
+
+Input: "The company is okay, nothing special."
+Sentiment: neutral
+
+Input: "Salary was very low and management was unhelpful."
+Sentiment: negative
+
+Analyze the sentiment (positive, neutral, negative) of this text:
+
+{text}
+Sentiment:

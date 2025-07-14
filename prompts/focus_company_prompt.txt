@@ -1,0 +1,18 @@
+Given the following review, extract only the parts that mention or refer to "{company_name}". If the review compares multiple companies, keep only the information, sentiment, and opinions relevant to "{company_name}". Omit details about other companies.
+
+Examples:
+Input: "ABC Corp has better benefits than XYZ Ltd."
+Company: "XYZ Ltd"
+Output: "XYZ Ltd has fewer benefits than ABC Corp."
+
+Input: "I worked at both ABC Corp and XYZ Ltd. ABC Corp was more supportive."
+Company: "ABC Corp"
+Output: "ABC Corp was more supportive."
+
+Input: "XYZ Ltd is a great place to work."
+Company: "XYZ Ltd"
+Output: "XYZ Ltd is a great place to work."
+
+Review: {text}
+Company: {company_name}
+Output:

@@ -2,7 +2,7 @@ from fastapi import FastAPI, Query, HTTPException
 from typing import Optional
 from tools.retrieve_mentions_tool import retrieve_mentions
 from pydantic import BaseModel
-from services.rag.chat import get_rag_response
+from services.rag.chat import get_rag_response, get_memory
 
 
 from sqlalchemy import text
@@ -78,6 +78,11 @@ def chat_with_rag(input: ChatInput):
         session_id=input.session_id
     )
     return {"answer": answer}
+
+@app.get("/chat/history")
+def get_chat_history(company: str = Query(...), session_id: str = Query(...)):
+    history = get_memory(session_id=session_id, company=company)
+    return {"history": [{"role": r, "message": m} for r, m in history]}
 
 @app.get("/keywords-breakdown")
 def keywords_breakdown(company: str):

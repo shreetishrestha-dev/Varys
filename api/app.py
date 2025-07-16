@@ -10,6 +10,8 @@ from services.db_setup import engine
 
 from fastapi.middleware.cors import CORSMiddleware
 
+from schemas.chat_input import ChatInput
+
 app = FastAPI()
 
 app.add_middleware(
@@ -68,16 +70,13 @@ def mention_type_breakdown(company: str):
         result = conn.execute(text(query), {"company": company}).fetchall()
         return [{"type": row[0], "count": row[1]} for row in result]
     
-class ChatInput(BaseModel):
-    company: str
-    query: str
-
 @app.post("/chat")
 def chat_with_rag(input: ChatInput):
-    try:
-        answer = get_rag_response(company=input.company, query=input.query)
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Vectorstore not found for this company.")
+    answer = get_rag_response(
+        company=input.company,
+        query=input.query,
+        session_id=input.session_id
+    )
     return {"answer": answer}
 
 @app.get("/keywords-breakdown")

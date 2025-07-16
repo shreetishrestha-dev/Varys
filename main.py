@@ -5,8 +5,9 @@ from services.preprocess_mentions import preprocess_mentions
 from services.populate_mentions_agentically import populate_mentions
 from services.rag.retriever import get_company_retriever
 from services.embed_mentions_from_db import build_vectorstore_from_db
+from services.db_setup import setup_tables
 
-
+setup_tables()
 
 parser = argparse.ArgumentParser(description="Company Review Summarizer CLI")
 parser.add_argument("company", help="Company name to search for")

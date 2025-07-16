@@ -1,16 +1,19 @@
-from fastapi import FastAPI, Query, HTTPException
 from typing import Optional
-from tools.retrieve_mentions_tool import retrieve_mentions
-from pydantic import BaseModel
-from services.rag.chat import get_rag_response, get_memory
-
-
 from sqlalchemy import text
-from services.db_setup import engine
 
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from tools.retrieve_mentions_tool import retrieve_mentions
+
+from services.rag.chat import get_rag_response, get_memory
+from services.db_setup import engine
+from services.companies import get_company_status
+
 from schemas.chat_input import ChatInput
+from schemas.script_run_request import ScriptRunRequest
+
+import subprocess
 
 app = FastAPI()
 
@@ -108,3 +111,25 @@ def get_companies():
     with engine.connect() as conn:
         result = conn.execute(text(query)).fetchall()
         return [row[0] for row in result]
+    
+@app.post("/run-script")
+def run_company_script(request: ScriptRunRequest):
+    try:
+        command = ["python", "main.py", request.company, f"--limit={request.limit}"]
+        if request.all_steps:
+            command.append("--all")
+
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        return {
+            "message": f"Script for '{request.company}' started successfully.",
+            "pid": process.pid
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    
+@app.get("/company/status")
+def check_status(company: str):
+    return {"status": get_company_status(company)}

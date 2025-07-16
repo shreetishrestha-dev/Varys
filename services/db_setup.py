@@ -7,6 +7,7 @@ Base = declarative_base()
 engine = create_engine(DB_CONNECTION_URL)
 
 def setup_tables():
+    create_companies_table()
     create_mentions_table()
     create_chat_sessions_table()
 
@@ -62,3 +63,25 @@ def create_chat_sessions_table():
         """))
         conn.commit()
         print("Table 'chat_sessions' created.")
+        
+def create_companies_table():
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'companies'
+            )
+        """))
+        if result.scalar():
+            print("Table 'companies' already exists.")
+            return
+
+        conn.execute(text("""
+        CREATE TABLE companies (
+            name TEXT PRIMARY KEY,
+            status TEXT DEFAULT 'preparing',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """))
+        conn.commit()
+        print("Table 'companies' created.")

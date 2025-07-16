@@ -2,8 +2,9 @@ from langchain.agents import Tool, AgentExecutor, create_openai_functions_agent
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from tools.retrieve_mentions_tool import retrieve_mentions
+from config import LLM_MODEL
 
-llm = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+llm = ChatOpenAI(model=LLM_MODEL, temperature=0)
 
 tools = [retrieve_mentions]
 

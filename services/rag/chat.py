@@ -7,6 +7,7 @@ from models.chat_sessions import ChatSession
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import HumanMessage, AIMessage
+from config import LLM_MODEL
 
 def get_rag_response(company: str, query: str, session_id: str = "default") -> str:
     # 1. Load history from DB
@@ -26,7 +27,7 @@ def get_rag_response(company: str, query: str, session_id: str = "default") -> s
 
     # 4. Load retriever and LLM
     retriever = get_company_retriever(company)
-    llm = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+    llm = ChatOpenAI(model=LLM_MODEL, temperature=0)
 
     # 5. Construct chain with memory
     qa = ConversationalRetrievalChain.from_llm(

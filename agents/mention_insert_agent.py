@@ -2,8 +2,9 @@ from langchain_openai import ChatOpenAI
 from langchain.agents import Tool, AgentExecutor, create_openai_functions_agent
 from langchain_core.prompts import PromptTemplate
 from tools.mention_insert_tool import insert_mention
+from config import LLM_MODEL
 
-llm = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+llm = ChatOpenAI(model=LLM_MODEL, temperature=0)
 
 def load_prompt(path):
     with open(path, "r") as f:

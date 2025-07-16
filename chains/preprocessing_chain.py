@@ -1,8 +1,9 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableMap
 from langchain_openai import ChatOpenAI
+from config import LLM_MODEL
 
-llm = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
+llm = ChatOpenAI(model=LLM_MODEL, temperature=0)
 
 def load_prompt(path):
     with open(path, "r") as f:

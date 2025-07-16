@@ -3,6 +3,7 @@ from sqlalchemy import text
 
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 
 from tools.retrieve_mentions_tool import retrieve_mentions
 
@@ -14,6 +15,8 @@ from schemas.chat_input import ChatInput
 from schemas.script_run_request import ScriptRunRequest
 
 import subprocess
+import os
+import time
 
 app = FastAPI()
 
@@ -112,24 +115,38 @@ def get_companies():
         result = conn.execute(text(query)).fetchall()
         return [row[0] for row in result]
     
+
 @app.post("/run-script")
 def run_company_script(request: ScriptRunRequest):
     try:
+        log_dir = "logs"
+        os.makedirs(log_dir, exist_ok=True)
+        log_file = os.path.join(log_dir, f"{request.company}_{int(time.time())}.log")
         command = ["python", "main.py", request.company, f"--limit={request.limit}"]
         if request.all_steps:
             command.append("--all")
 
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        with open(log_file, "w") as f:
+            process = subprocess.Popen(command, stdout=f, stderr=subprocess.STDOUT, text=True)
 
         return {
             "message": f"Script for '{request.company}' started successfully.",
-            "pid": process.pid
+            "pid": process.pid,
+            "log_file": log_file,
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-    
+
+@app.get("/logs/{logfile}")
+def get_log_file(logfile: str):
+    log_path = os.path.join("logs", logfile)
+    if not os.path.isfile(log_path):
+        raise HTTPException(status_code=404, detail="Log file not found")
+    with open(log_path, "r") as f:
+        log_content = f.read()
+    return PlainTextResponse(content=log_content)
+
 @app.get("/company/status")
 def check_status(company: str):
     return {"status": get_company_status(company)}

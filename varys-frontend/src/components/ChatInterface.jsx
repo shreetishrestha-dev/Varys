@@ -7,6 +7,7 @@ import { Textarea } from "./ui/textarea"
 import { ScrollArea } from "./ui/scroll-area"
 import { Avatar, AvatarFallback } from "./ui/avatar"
 import { Send, Bot, User } from "lucide-react"
+import { sendChatMessage, getChatHistory } from "../api/mockApi"
 
 export default function ChatInterface({ selectedCompany }) {
   const [messages, setMessages] = useState([])
@@ -15,32 +16,27 @@ export default function ChatInterface({ selectedCompany }) {
   const [sessionId] = useState(() => Math.random().toString(36).substring(7))
   const scrollAreaRef = useRef(null)
 
-  // Mock responses based on common queries
-  const getMockResponse = (query) => {
-    const lowerQuery = query.toLowerCase()
-
-    if (lowerQuery.includes("salary") || lowerQuery.includes("pay") || lowerQuery.includes("compensation")) {
-      return "Based on the mentions analyzed, employees generally report competitive salaries. The average sentiment around compensation is positive, with many mentioning good benefits packages and fair pay scales. However, some reviews suggest that salary growth could be improved for senior positions."
+  // Load chat history when company changes
+  useEffect(() => {
+    if (selectedCompany) {
+      loadChatHistory()
+    } else {
+      setMessages([])
     }
+  }, [selectedCompany])
 
-    if (lowerQuery.includes("work") && lowerQuery.includes("hour")) {
-      return "Regarding working hours, the feedback is mixed. Many employees appreciate the flexible work arrangements and remote work options. However, some mentions indicate occasional long hours during project deadlines. Overall, work-life balance seems to be a priority for the company."
+  const loadChatHistory = async () => {
+    try {
+      const history = await getChatHistory(selectedCompany, sessionId)
+      setMessages(history)
+    } catch (error) {
+      console.error("Failed to load chat history:", error)
     }
-
-    if (lowerQuery.includes("culture") || lowerQuery.includes("environment")) {
-      return "The company culture receives mostly positive feedback. Employees frequently mention a collaborative environment, supportive colleagues, and good team dynamics. The innovation-focused culture and learning opportunities are particularly well-regarded."
-    }
-
-    if (lowerQuery.includes("management") || lowerQuery.includes("leadership")) {
-      return "Management feedback is varied. While many employees praise supportive managers and clear leadership, some reviews mention communication gaps and unclear expectations. The company seems to be working on improving management training and communication processes."
-    }
-
-    return `Based on the available data for ${selectedCompany || "the selected company"}, I can see various mentions and reviews. The overall sentiment analysis shows a mix of positive and constructive feedback. Would you like me to focus on any specific aspect like culture, benefits, or work environment?`
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || isLoading || !selectedCompany) return
 
     const userMessage = {
       id: Date.now().toString(),
@@ -53,18 +49,21 @@ export default function ChatInterface({ selectedCompany }) {
     setInput("")
     setIsLoading(true)
 
-    // Simulate API call delay
-    setTimeout(() => {
-      const assistantMessage = {
+    try {
+      const assistantMessage = await sendChatMessage(input, sessionId, selectedCompany)
+      setMessages((prev) => [...prev, assistantMessage])
+    } catch (error) {
+      console.error("Failed to send message:", error)
+      const errorMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: getMockResponse(input),
+        content: "Sorry, I encountered an error while processing your message. Please try again.",
         timestamp: new Date(),
       }
-
-      setMessages((prev) => [...prev, assistantMessage])
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   useEffect(() => {

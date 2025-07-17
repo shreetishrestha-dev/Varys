@@ -1,102 +1,119 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { Input } from "./ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Badge } from "./ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
-import { Search, Filter } from "lucide-react"
-
-// Mock data
-const mockMentions = [
-  {
-    id: "1",
-    source: "Glassdoor",
-    type: "Review",
-    sentiment: "positive",
-    keywords: ["salary", "benefits", "culture"],
-    text: "Great company culture and competitive salary. The benefits package is excellent.",
-    date: "2024-01-15",
-  },
-  {
-    id: "2",
-    source: "LinkedIn",
-    type: "Post",
-    sentiment: "neutral",
-    keywords: ["work-life balance", "remote work"],
-    text: "The company offers flexible remote work options which is great for work-life balance.",
-    date: "2024-01-14",
-  },
-  {
-    id: "3",
-    source: "Indeed",
-    type: "Review",
-    sentiment: "negative",
-    keywords: ["management", "communication"],
-    text: "Management could improve communication with the team. Sometimes unclear expectations.",
-    date: "2024-01-13",
-  },
-  {
-    id: "4",
-    source: "Twitter",
-    type: "Tweet",
-    sentiment: "positive",
-    keywords: ["innovation", "technology"],
-    text: "Impressed by the innovative technology solutions from this company. Great work!",
-    date: "2024-01-12",
-  },
-  {
-    id: "5",
-    source: "Reddit",
-    type: "Comment",
-    sentiment: "neutral",
-    keywords: ["interview", "process"],
-    text: "The interview process was thorough but fair. They really care about finding the right fit.",
-    date: "2024-01-11",
-  },
-]
+import { useState, useMemo, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Input } from "./ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Badge } from "./ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
+import { Search, Filter, Loader2 } from "lucide-react";
+import { fetchCompanyMentions } from "../api/mockApi";
 
 export default function DataView({ company }) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [sentimentFilter, setSentimentFilter] = useState("all")
-  const [typeFilter, setTypeFilter] = useState("all")
-  const [keywordFilter, setKeywordFilter] = useState("all")
+  const [mentions, setMentions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sentimentFilter, setSentimentFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [keywordFilter, setKeywordFilter] = useState("all");
+
+  // Load mentions when company changes
+  useEffect(() => {
+    if (company) {
+      loadMentions();
+    }
+  }, [company]);
+
+  const loadMentions = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchCompanyMentions(company, { limit: 100 });
+      setMentions(data);
+    } catch (error) {
+      console.error("Failed to load mentions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredMentions = useMemo(() => {
-    return mockMentions.filter((mention) => {
+    return mentions.filter((mention) => {
       const matchesSearch =
-        mention.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        mention.source.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesSentiment = sentimentFilter === "all" || mention.sentiment === sentimentFilter
-      const matchesType = typeFilter === "all" || mention.type === typeFilter
-      const matchesKeyword = keywordFilter === "all" || mention.keywords.includes(keywordFilter)
+        mention.text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        mention.source?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSentiment =
+        sentimentFilter === "all" || mention.sentiment === sentimentFilter;
+      const matchesType = typeFilter === "all" || mention.type === typeFilter;
+      const matchesKeyword =
+        keywordFilter === "all" ||
+        (mention.keywords && mention.keywords.includes(keywordFilter));
 
-      return matchesSearch && matchesSentiment && matchesType && matchesKeyword
-    })
-  }, [searchTerm, sentimentFilter, typeFilter, keywordFilter])
+      return matchesSearch && matchesSentiment && matchesType && matchesKeyword;
+    });
+  }, [mentions, searchTerm, sentimentFilter, typeFilter, keywordFilter]);
 
-  const allKeywords = Array.from(new Set(mockMentions.flatMap((m) => m.keywords)))
-  const allTypes = Array.from(new Set(mockMentions.map((m) => m.type)))
+  const allKeywords = Array.from(
+    new Set(mentions.flatMap((m) => m.keywords || []))
+  );
+  const allTypes = Array.from(
+    new Set(mentions.map((m) => m.type).filter(Boolean))
+  );
 
   const getSentimentColor = (sentiment) => {
     switch (sentiment) {
       case "positive":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "negative":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       case "neutral":
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin mr-2" />
+          <span>Loading mentions...</span>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Company Mentions - {company}</CardTitle>
-        <CardDescription>View and filter all mentions and reviews for the selected company.</CardDescription>
+        <CardDescription>
+          View and filter all mentions and reviews for the selected company.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Filters */}
@@ -119,10 +136,18 @@ export default function DataView({ company }) {
               <SelectValue placeholder="Sentiment" />
             </SelectTrigger>
             <SelectContent className="bg-white z-50 border border-border shadow-lg animate-in fade-in opacity-100">
-              <SelectItem value="all" className="text-black">All Sentiments</SelectItem>
-              <SelectItem value="positive" className="text-black">Positive</SelectItem>
-              <SelectItem value="negative" className="text-black">Negative</SelectItem>
-              <SelectItem value="neutral" className="text-black">Neutral</SelectItem>
+              <SelectItem value="all" className="text-black">
+                All Sentiments
+              </SelectItem>
+              <SelectItem value="positive" className="text-black">
+                Positive
+              </SelectItem>
+              <SelectItem value="negative" className="text-black">
+                Negative
+              </SelectItem>
+              <SelectItem value="neutral" className="text-black">
+                Neutral
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -131,7 +156,9 @@ export default function DataView({ company }) {
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent className="bg-white z-50 border border-border shadow-lg animate-in fade-in opacity-100">
-              <SelectItem value="all" className="text-black">All Types</SelectItem>
+              <SelectItem value="all" className="text-black">
+                All Types
+              </SelectItem>
               {allTypes.map((type) => (
                 <SelectItem key={type} value={type} className="text-black">
                   {type}
@@ -145,9 +172,15 @@ export default function DataView({ company }) {
               <SelectValue placeholder="Keyword" />
             </SelectTrigger>
             <SelectContent className="bg-white z-50 border border-border shadow-lg animate-in fade-in opacity-100">
-              <SelectItem value="all" className="text-black">All Keywords</SelectItem>
+              <SelectItem value="all" className="text-black">
+                All Keywords
+              </SelectItem>
               {allKeywords.map((keyword) => (
-                <SelectItem key={keyword} value={keyword} className="text-black">
+                <SelectItem
+                  key={keyword}
+                  value={keyword}
+                  className="text-black"
+                >
                   {keyword}
                 </SelectItem>
               ))}
@@ -157,7 +190,7 @@ export default function DataView({ company }) {
 
         {/* Results count */}
         <div className="text-sm text-muted-foreground">
-          Showing {filteredMentions.length} of {mockMentions.length} mentions
+          Showing {filteredMentions.length} of {mentions.length} mentions
         </div>
 
         {/* Table */}
@@ -174,39 +207,58 @@ export default function DataView({ company }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMentions.map((mention) => (
-                <TableRow key={mention.id}>
-                  <TableCell className="font-medium">{mention.source}</TableCell>
-                  <TableCell>{mention.type}</TableCell>
-                  <TableCell>
-                    <Badge className={getSentimentColor(mention.sentiment)}>{mention.sentiment}</Badge>
+              {filteredMentions.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    No mentions found matching your filters
                   </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {mention.keywords.slice(0, 3).map((keyword) => (
-                        <Badge key={keyword} variant="outline" className="text-xs">
-                          {keyword}
-                        </Badge>
-                      ))}
-                      {mention.keywords.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{mention.keywords.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-md">
-                    <div className="truncate" title={mention.text}>
-                      {mention.text}
-                    </div>
-                  </TableCell>
-                  <TableCell>{mention.date}</TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredMentions.map((mention, index) => (
+                  <TableRow key={mention.id || index}>
+                    <TableCell className="font-medium">
+                      {mention.source || "N/A"}
+                    </TableCell>
+                    <TableCell>{mention.type || "N/A"}</TableCell>
+                    <TableCell>
+                      <Badge className={getSentimentColor(mention.sentiment)}>
+                        {mention.sentiment || "unknown"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {(mention.keywords || []).slice(0, 3).map((keyword) => (
+                          <Badge
+                            key={keyword}
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {keyword}
+                          </Badge>
+                        ))}
+                        {(mention.keywords || []).length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{mention.keywords.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-md">
+                      <div className="truncate" title={mention.text}>
+                        {mention.text || "No text available"}
+                      </div>
+                    </TableCell>
+                    <TableCell>{formatDate(mention.date)}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

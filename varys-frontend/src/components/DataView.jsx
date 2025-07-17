@@ -114,26 +114,26 @@ export default function DataView({ company }) {
           </div>
 
           <Select value={sentimentFilter} onValueChange={setSentimentFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[150px] bg-white z-50">
               <Filter className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Sentiment" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sentiments</SelectItem>
-              <SelectItem value="positive">Positive</SelectItem>
-              <SelectItem value="negative">Negative</SelectItem>
-              <SelectItem value="neutral">Neutral</SelectItem>
+            <SelectContent className="bg-white z-50 border border-border shadow-lg animate-in fade-in opacity-100">
+              <SelectItem value="all" className="text-black">All Sentiments</SelectItem>
+              <SelectItem value="positive" className="text-black">Positive</SelectItem>
+              <SelectItem value="negative" className="text-black">Negative</SelectItem>
+              <SelectItem value="neutral" className="text-black">Neutral</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[150px] bg-white z-50">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
+            <SelectContent className="bg-white z-50 border border-border shadow-lg animate-in fade-in opacity-100">
+              <SelectItem value="all" className="text-black">All Types</SelectItem>
               {allTypes.map((type) => (
-                <SelectItem key={type} value={type}>
+                <SelectItem key={type} value={type} className="text-black">
                   {type}
                 </SelectItem>
               ))}
@@ -141,13 +141,13 @@ export default function DataView({ company }) {
           </Select>
 
           <Select value={keywordFilter} onValueChange={setKeywordFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[150px] bg-white z-50">
               <SelectValue placeholder="Keyword" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Keywords</SelectItem>
+            <SelectContent className="bg-white z-50 border border-border shadow-lg animate-in fade-in opacity-100">
+              <SelectItem value="all" className="text-black">All Keywords</SelectItem>
               {allKeywords.map((keyword) => (
-                <SelectItem key={keyword} value={keyword}>
+                <SelectItem key={keyword} value={keyword} className="text-black">
                   {keyword}
                 </SelectItem>
               ))}

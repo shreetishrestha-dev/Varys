@@ -150,3 +150,38 @@ def get_log_file(logfile: str):
 @app.get("/company/status")
 def check_status(company: str):
     return {"status": get_company_status(company)}
+
+@app.get("/chat/all-history")
+def get_all_chat_histories(company: str = Query(...)):
+    query = """
+        SELECT session_id, role, message, timestamp
+        FROM chat_sessions
+        WHERE company = :company
+        ORDER BY session_id, timestamp
+    """
+    with engine.connect() as conn:
+        result = conn.execute(text(query), {"company": company}).fetchall()
+
+    from collections import defaultdict
+    grouped = defaultdict(list)
+    for session_id, role, message, timestamp in result:
+        grouped[session_id].append({
+            "role": role,
+            "message": message,
+            "timestamp": timestamp.isoformat() if hasattr(timestamp, "isoformat") else timestamp
+        })
+
+    return {"histories": dict(grouped)}
+
+@app.get("/chat/recent-questions")
+def get_recent_questions(company: str = Query(...), limit: int = Query(10)):
+    query = """
+        SELECT DISTINCT ON (message) message, timestamp
+        FROM chat_sessions
+        WHERE company = :company AND role = 'user'
+        ORDER BY message, timestamp DESC
+        LIMIT :limit
+    """
+    with engine.connect() as conn:
+        result = conn.execute(text(query), {"company": company, "limit": limit}).fetchall()
+        return {"questions": [row[0] for row in result]}

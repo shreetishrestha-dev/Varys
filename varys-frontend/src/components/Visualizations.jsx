@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { Loader2 } from "lucide-react"
-import { fetchSentimentBreakdown, fetchMentionTypes, fetchKeywords } from "../api/mockApi"
+import { Loader2, MessageSquare, Clock, User } from "lucide-react"
+import { fetchSentimentBreakdown, fetchMentionTypes, fetchKeywords, getRecentQuestions } from "../api/mockApi"
 
 export default function Visualizations({ company }) {
   const [sentimentData, setSentimentData] = useState([])
   const [categoryData, setCategoryData] = useState([])
   const [keywordData, setKeywordData] = useState([])
+  const [recentQuestions, setRecentQuestions] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -21,10 +22,11 @@ export default function Visualizations({ company }) {
   const loadVisualizationData = async () => {
     setLoading(true)
     try {
-      const [sentiment, types, keywords] = await Promise.all([
+      const [sentiment, types, keywords, questions] = await Promise.all([
         fetchSentimentBreakdown(company),
         fetchMentionTypes(company),
         fetchKeywords(company),
+        getRecentQuestions(company, 15), // Get more questions for better visualization
       ])
 
       // Transform sentiment data for pie chart
@@ -52,15 +54,68 @@ export default function Visualizations({ company }) {
         frequency: item.count,
       }))
 
+      // Transform questions data
+      const transformedQuestions = questions.questions.map((question, index) => ({
+        question: question,
+        timestamp: new Date(Date.now() - index * 60000), // Mock timestamps for now
+        id: index,
+      }))
+
       setSentimentData(transformedSentiment)
       setCategoryData(transformedTypes)
       setKeywordData(transformedKeywords)
+      setRecentQuestions(transformedQuestions)
     } catch (error) {
       console.error("Failed to load visualization data:", error)
     } finally {
       setLoading(false)
     }
   }
+
+  const getQuestionCategory = (question) => {
+    const lowerQuestion = question.toLowerCase()
+    if (lowerQuestion.includes("salary") || lowerQuestion.includes("pay") || lowerQuestion.includes("compensation")) {
+      return { category: "Compensation", color: "#10b981" }
+    } else if (
+      lowerQuestion.includes("culture") ||
+      lowerQuestion.includes("environment") ||
+      lowerQuestion.includes("work life")
+    ) {
+      return { category: "Culture", color: "#3b82f6" }
+    } else if (
+      lowerQuestion.includes("management") ||
+      lowerQuestion.includes("manager") ||
+      lowerQuestion.includes("leadership")
+    ) {
+      return { category: "Management", color: "#8b5cf6" }
+    } else if (
+      lowerQuestion.includes("career") ||
+      lowerQuestion.includes("growth") ||
+      lowerQuestion.includes("promotion")
+    ) {
+      return { category: "Career Growth", color: "#f59e0b" }
+    } else if (
+      lowerQuestion.includes("benefit") ||
+      lowerQuestion.includes("insurance") ||
+      lowerQuestion.includes("vacation")
+    ) {
+      return { category: "Benefits", color: "#ef4444" }
+    } else {
+      return { category: "General", color: "#6b7280" }
+    }
+  }
+
+  const questionCategories = recentQuestions.reduce((acc, q) => {
+    const { category } = getQuestionCategory(q.question)
+    acc[category] = (acc[category] || 0) + 1
+    return acc
+  }, {})
+
+  const questionCategoryData = Object.entries(questionCategories).map(([category, count]) => ({
+    name: category,
+    value: count,
+    color: getQuestionCategory(`${category.toLowerCase()}`).color,
+  }))
 
   if (loading) {
     return (
@@ -179,28 +234,103 @@ export default function Visualizations({ company }) {
         </Card>
       </div>
 
-      {/* Detailed Keyword Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Keyword Frequency Analysis</CardTitle>
-          <CardDescription>Detailed view of top 10 most mentioned keywords for {company}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {keywordData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={keywordData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="keyword" type="category" width={120} />
-                <Tooltip />
-                <Bar dataKey="frequency" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">No keyword data available</div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Recent Chat Questions */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <MessageSquare className="mr-2 h-5 w-5" />
+              Recent Questions Asked
+            </CardTitle>
+            <CardDescription>Latest questions from AI chat sessions about {company}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentQuestions.length > 0 ? (
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {recentQuestions.slice(0, 10).map((item, index) => {
+                  const { category, color } = getQuestionCategory(item.question)
+                  return (
+                    <div key={item.id || index} className="flex items-start space-x-3 p-3 bg-muted/30 rounded-lg">
+                      <div className="flex-shrink-0">
+                        <User className="h-4 w-4 text-muted-foreground mt-1" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground line-clamp-2">{item.question}</p>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <span
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                            style={{ backgroundColor: `${color}20`, color: color }}
+                          >
+                            {category}
+                          </span>
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <Clock className="mr-1 h-3 w-3" />
+                            {new Date(item.timestamp).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <MessageSquare className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>No recent questions found</p>
+                <p className="text-xs mt-1">Start asking questions in the AI chat to see them here</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Question Categories Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Question Categories</CardTitle>
+            <CardDescription>Distribution of question types asked about {company}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {questionCategoryData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={questionCategoryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {questionCategoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap justify-center gap-2 mt-4">
+                  {questionCategoryData.map((item) => (
+                    <div key={item.name} className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-xs">
+                        {item.name}: {item.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>No question categories yet</p>
+                <p className="text-xs mt-1">Categories will appear as users ask questions</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

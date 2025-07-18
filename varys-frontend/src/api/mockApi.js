@@ -162,6 +162,32 @@ export const getChatHistory = async (company, sessionId) => {
   }
 }
 
+// Get all chat histories for a company
+export const getAllChatHistories = async (company) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat/all-history?company=${encodeURIComponent(company)}`)
+    if (!response.ok) throw new Error("Failed to fetch all chat histories")
+    return await response.json()
+  } catch (error) {
+    console.error("Error fetching all chat histories:", error)
+    return { histories: {} }
+  }
+}
+
+// Get recent questions for a company
+export const getRecentQuestions = async (company, limit = 10) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/chat/recent-questions?company=${encodeURIComponent(company)}&limit=${limit}`,
+    )
+    if (!response.ok) throw new Error("Failed to fetch recent questions")
+    return await response.json()
+  } catch (error) {
+    console.error("Error fetching recent questions:", error)
+    return { questions: [] }
+  }
+}
+
 // Get log file content
 export const getLogFile = async (logFile) => {
   try {

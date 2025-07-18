@@ -188,6 +188,96 @@ export const getRecentQuestions = async (company, limit = 10) => {
   }
 }
 
+// Get dashboard stats - aggregate data for all companies
+export const getDashboardStats = async () => {
+  try {
+    const companies = await fetchCompanies()
+
+    let totalMentions = 0
+    let totalSentimentScore = 0
+    let sentimentCount = 0
+    const activeCompanies = companies.length
+
+    // Get stats for each company
+    for (const company of companies) {
+      try {
+        const [mentions, sentiment] = await Promise.all([
+          fetchCompanyMentions(company.name, { limit: 1000 }),
+          fetchSentimentBreakdown(company.name),
+        ])
+
+        totalMentions += mentions.length
+
+        // Calculate average sentiment score
+        const sentimentScores = { positive: 8, neutral: 5, negative: 2 }
+        sentiment.forEach((item) => {
+          totalSentimentScore += (sentimentScores[item.sentiment] || 5) * item.count
+          sentimentCount += item.count
+        })
+      } catch (error) {
+        console.error(`Error fetching stats for ${company.name}:`, error)
+      }
+    }
+
+    const avgSentiment = sentimentCount > 0 ? (totalSentimentScore / sentimentCount).toFixed(1) : "0"
+
+    return {
+      totalCompanies: companies.length,
+      totalMentions,
+      avgSentimentScore: `${avgSentiment}/10`,
+      activeCompanies,
+    }
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error)
+    return {
+      totalCompanies: 0,
+      totalMentions: 0,
+      avgSentimentScore: "0/10",
+      activeCompanies: 0,
+    }
+  }
+}
+
+// Get recent company activity
+export const getRecentCompanyActivity = async () => {
+  try {
+    const companies = await fetchCompanies()
+    const recentActivity = []
+
+    for (const company of companies.slice(0, 5)) {
+      // Limit to first 5 companies
+      try {
+        const [mentions, sentiment] = await Promise.all([
+          fetchCompanyMentions(company.name, { limit: 100 }),
+          fetchSentimentBreakdown(company.name),
+        ])
+
+        // Determine overall sentiment
+        let overallSentiment = "neutral"
+        if (sentiment.length > 0) {
+          const maxSentiment = sentiment.reduce((prev, current) => (prev.count > current.count ? prev : current))
+          overallSentiment = maxSentiment.sentiment
+        }
+
+        recentActivity.push({
+          id: company.id,
+          name: company.name,
+          mentions: mentions.length,
+          sentiment: overallSentiment,
+          lastUpdated: "Recently", // You could add actual timestamps from your data
+        })
+      } catch (error) {
+        console.error(`Error fetching activity for ${company.name}:`, error)
+      }
+    }
+
+    return recentActivity
+  } catch (error) {
+    console.error("Error fetching recent company activity:", error)
+    return []
+  }
+}
+
 // Get log file content
 export const getLogFile = async (logFile) => {
   try {

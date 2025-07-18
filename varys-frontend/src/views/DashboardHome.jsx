@@ -1,8 +1,15 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Button } from "../components/ui/button"
-import { Badge } from "../components/ui/badge"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import {
   Building2,
   TrendingUp,
@@ -14,44 +21,9 @@ import {
   Activity,
   Clock,
   Star,
-} from "lucide-react"
-
-const recentCompanies = [
-  { id: "leapfrog", name: "Leapfrog Technology", lastUpdated: "2 hours ago", mentions: 156, sentiment: "positive" },
-  { id: "cloudfactory", name: "CloudFactory", lastUpdated: "1 day ago", mentions: 203, sentiment: "positive" },
-  { id: "fusemachines", name: "FUSEmachines", lastUpdated: "3 days ago", mentions: 89, sentiment: "neutral" },
-]
-
-const stats = [
-  {
-    title: "Total Companies",
-    value: "12",
-    change: "+2 this month",
-    icon: Building2,
-    color: "text-blue-600",
-  },
-  {
-    title: "Total Mentions",
-    value: "2,847",
-    change: "+12% from last month",
-    icon: MessageSquare,
-    color: "text-green-600",
-  },
-  {
-    title: "Avg Sentiment Score",
-    value: "7.2/10",
-    change: "+0.3 from last month",
-    icon: TrendingUp,
-    color: "text-purple-600",
-  },
-  {
-    title: "Active Monitoring",
-    value: "8",
-    change: "Companies tracked",
-    icon: Activity,
-    color: "text-orange-600",
-  },
-]
+  Loader2,
+} from "lucide-react";
+import { getDashboardStats, getRecentCompanyActivity } from "../api/mockApi";
 
 const quickActions = [
   {
@@ -75,20 +47,128 @@ const quickActions = [
     action: "chat",
     color: "bg-purple-50 hover:bg-purple-100 border-purple-200",
   },
-]
+];
 
 export default function DashboardHome({ onCompanySelect, onTabChange }) {
+  const [stats, setStats] = useState({
+    totalCompanies: 0,
+    totalMentions: 0,
+    avgSentimentScore: "0/10",
+    activeCompanies: 0,
+  });
+  const [recentCompanies, setRecentCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const [dashboardStats, recentActivity] = await Promise.all([
+        getDashboardStats(),
+        getRecentCompanyActivity(),
+      ]);
+
+      setStats(dashboardStats);
+      setRecentCompanies(recentActivity);
+    } catch (err) {
+      console.error("Failed to load dashboard data:", err);
+      setError("Failed to load dashboard data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getSentimentColor = (sentiment) => {
     switch (sentiment) {
       case "positive":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "negative":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       case "neutral":
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const statsConfig = [
+    {
+      title: "Total Companies",
+      value: stats.totalCompanies.toString(),
+      change: `${stats.totalCompanies} monitored`,
+      icon: Building2,
+      color: "text-blue-600",
+    },
+    {
+      title: "Total Mentions",
+      value: stats.totalMentions.toLocaleString(),
+      change: "Across all companies",
+      icon: MessageSquare,
+      color: "text-green-600",
+    },
+    {
+      title: "Avg Sentiment Score",
+      value: stats.avgSentimentScore,
+      change: "Overall rating",
+      icon: TrendingUp,
+      color: "text-purple-600",
+    },
+    {
+      title: "Active Monitoring",
+      value: stats.activeCompanies.toString(),
+      change: "Companies tracked",
+      icon: Activity,
+      color: "text-orange-600",
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center space-y-4 py-8">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <div className="p-3 bg-primary/10 rounded-full">
+              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight">
+            Loading Dashboard...
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Fetching your company intelligence data...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center space-y-4 py-8">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <div className="p-3 bg-red-100 rounded-full">
+              <Building2 className="h-8 w-8 text-red-600" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight">
+            Error Loading Dashboard
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            {error}
+          </p>
+          <Button onClick={loadDashboardData} className="mt-4">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -102,15 +182,19 @@ export default function DashboardHome({ onCompanySelect, onTabChange }) {
         </div>
         <h1 className="text-4xl font-bold tracking-tight">Welcome to Varys</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Your intelligent company monitoring platform. Get real-time insights, sentiment analysis, and AI-powered
-          intelligence about companies that matter to you.
+          Understand how the world sees your brand — with GenAI-powered insight
+          from real conversations.
         </p>
         <div className="flex items-center justify-center space-x-4 pt-4">
           <Button onClick={() => onTabChange("add-company")} size="lg">
             <Plus className="mr-2 h-4 w-4" />
             Add Your First Company
           </Button>
-          <Button variant="outline" size="lg" onClick={() => onTabChange("chat")}>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => onTabChange("chat")}
+          >
             <MessageSquare className="mr-2 h-4 w-4" />
             Try AI Chat
           </Button>
@@ -119,10 +203,12 @@ export default function DashboardHome({ onCompanySelect, onTabChange }) {
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statsConfig.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
@@ -141,44 +227,73 @@ export default function DashboardHome({ onCompanySelect, onTabChange }) {
               <Clock className="mr-2 h-5 w-5" />
               Recent Companies
             </CardTitle>
-            <CardDescription>Companies you've been monitoring recently</CardDescription>
+            <CardDescription>
+              Companies you've been monitoring recently
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentCompanies.map((company) => (
-              <div
-                key={company.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <h4 className="font-medium">{company.name}</h4>
-                    <Badge className={getSentimentColor(company.sentiment)} variant="secondary">
-                      {company.sentiment}
-                    </Badge>
+            {recentCompanies.length > 0 ? (
+              <>
+                {recentCompanies.map((company) => (
+                  <div
+                    key={company.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-medium">{company.name}</h4>
+                        <Badge
+                          className={getSentimentColor(company.sentiment)}
+                          variant="secondary"
+                        >
+                          {company.sentiment}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <span className="flex items-center">
+                          <MessageSquare className="mr-1 h-3 w-3" />
+                          {company.mentions} mentions
+                        </span>
+                        <span>Updated {company.lastUpdated}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        onCompanySelect(company.name);
+                        onTabChange("overview");
+                      }}
+                    >
+                      View <ArrowRight className="ml-1 h-3 w-3" />
+                    </Button>
                   </div>
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                    <span className="flex items-center">
-                      <MessageSquare className="mr-1 h-3 w-3" />
-                      {company.mentions} mentions
-                    </span>
-                    <span>Updated {company.lastUpdated}</span>
-                  </div>
-                </div>
+                ))}
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    onCompanySelect(company.id)
-                    onTabChange("overview")
-                  }}
+                  variant="outline"
+                  className="w-full bg-transparent"
+                  onClick={() => onTabChange("data")}
                 >
-                  View <ArrowRight className="ml-1 h-3 w-3" />
+                  View All Companies
+                </Button>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Building2 className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>No companies found</p>
+                <p className="text-xs mt-1">
+                  Add your first company to get started
+                </p>
+                <Button
+                  onClick={() => onTabChange("add-company")}
+                  className="mt-4"
+                  size="sm"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Company
                 </Button>
               </div>
-            ))}
-            <Button variant="outline" className="w-full bg-transparent" onClick={() => onTabChange("data")}>
-              View All Companies
-            </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -189,7 +304,9 @@ export default function DashboardHome({ onCompanySelect, onTabChange }) {
               <Star className="mr-2 h-5 w-5" />
               Quick Actions
             </CardTitle>
-            <CardDescription>Get started with these common tasks</CardDescription>
+            <CardDescription>
+              Get started with these common tasks
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {quickActions.map((action) => (
@@ -202,7 +319,9 @@ export default function DashboardHome({ onCompanySelect, onTabChange }) {
                 <action.icon className="mr-3 h-5 w-5" />
                 <div className="text-left">
                   <div className="font-medium">{action.title}</div>
-                  <div className="text-sm text-muted-foreground">{action.description}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {action.description}
+                  </div>
                 </div>
                 <ArrowRight className="ml-auto h-4 w-4" />
               </Button>
@@ -215,7 +334,9 @@ export default function DashboardHome({ onCompanySelect, onTabChange }) {
       <Card>
         <CardHeader>
           <CardTitle>Platform Features</CardTitle>
-          <CardDescription>Discover what Varys can do for your company intelligence needs</CardDescription>
+          <CardDescription>
+            Discover what Varys can do for your company intelligence needs
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 md:grid-cols-3">
@@ -225,7 +346,8 @@ export default function DashboardHome({ onCompanySelect, onTabChange }) {
               </div>
               <h3 className="font-semibold">Real-time Analytics</h3>
               <p className="text-sm text-muted-foreground">
-                Get instant insights with sentiment analysis, keyword tracking, and trend monitoring.
+                Get instant insights with sentiment analysis, keyword tracking,
+                and trend monitoring.
               </p>
             </div>
             <div className="text-center space-y-2">
@@ -234,7 +356,8 @@ export default function DashboardHome({ onCompanySelect, onTabChange }) {
               </div>
               <h3 className="font-semibold">AI-Powered Chat</h3>
               <p className="text-sm text-muted-foreground">
-                Ask natural language questions and get intelligent answers about company data.
+                Ask natural language questions and get intelligent answers about
+                company data.
               </p>
             </div>
             <div className="text-center space-y-2">
@@ -243,12 +366,13 @@ export default function DashboardHome({ onCompanySelect, onTabChange }) {
               </div>
               <h3 className="font-semibold">Multi-Source Monitoring</h3>
               <p className="text-sm text-muted-foreground">
-                Track mentions across social media, review sites, news, and professional networks.
+                Track mentions across social media, review sites, news, and
+                professional networks.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

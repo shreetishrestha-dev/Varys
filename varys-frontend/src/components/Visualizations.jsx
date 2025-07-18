@@ -315,13 +315,12 @@ export default function Visualizations({ company }) {
             {recentQuestions.length > 0 ? (
               <div className="space-y-4 max-h-80 overflow-y-auto">
                 {recentQuestions.slice(0, 10).map((item, index) => {
-                  const { category, color } = getQuestionCategory(
-                    item.question
-                  );
+                  const { category, color } = getQuestionCategory(item.question);
+                  // If you have AI answers, align them right. Here, only user questions are shown, so align left.
                   return (
                     <div
                       key={item.id || index}
-                      className="flex items-start space-x-3"
+                      className="flex flex-row items-start space-x-3 justify-start"
                     >
                       {/* Avatar */}
                       <Avatar className="h-8 w-8 flex-shrink-0">
@@ -329,27 +328,21 @@ export default function Visualizations({ company }) {
                           <User className="h-4 w-4 text-blue-600" />
                         </AvatarFallback>
                       </Avatar>
-
                       {/* Message Content */}
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center space-x-2">
+                      <div className="flex-1 space-y-1 text-left">
+                        <div className="flex items-center space-x-2 justify-start">
                           <span className="text-sm font-medium">User</span>
                           <span className="text-xs text-muted-foreground">
                             {formatTime(item.timestamp)}
                           </span>
                         </div>
-
                         <div className="inline-block max-w-[90%] px-4 py-3 bg-blue-500 text-white rounded-2xl rounded-tl-md text-sm leading-relaxed">
                           <p>{item.question}</p>
                         </div>
-
                         <div className="flex items-center space-x-2 mt-2">
                           <span
                             className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                            style={{
-                              backgroundColor: `${color}20`,
-                              color: color,
-                            }}
+                            style={{ backgroundColor: `${color}20`, color: color }}
                           >
                             {category}
                           </span>

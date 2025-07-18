@@ -1,121 +1,159 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { Loader2, MessageSquare, Clock, User } from "lucide-react"
-import { fetchSentimentBreakdown, fetchMentionTypes, fetchKeywords, getRecentQuestions } from "../api/mockApi"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { Loader2, MessageSquare, User } from "lucide-react";
+import {
+  fetchSentimentBreakdown,
+  fetchMentionTypes,
+  fetchKeywords,
+  getRecentQuestions,
+} from "../api/mockApi";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 
 export default function Visualizations({ company }) {
-  const [sentimentData, setSentimentData] = useState([])
-  const [categoryData, setCategoryData] = useState([])
-  const [keywordData, setKeywordData] = useState([])
-  const [recentQuestions, setRecentQuestions] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [sentimentData, setSentimentData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+  const [keywordData, setKeywordData] = useState([]);
+  const [recentQuestions, setRecentQuestions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (company) {
-      loadVisualizationData()
+      loadVisualizationData();
     }
-  }, [company])
+  }, [company]);
 
   const loadVisualizationData = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       const [sentiment, types, keywords, questions] = await Promise.all([
         fetchSentimentBreakdown(company),
         fetchMentionTypes(company),
         fetchKeywords(company),
         getRecentQuestions(company, 15), // Get more questions for better visualization
-      ])
+      ]);
 
       // Transform sentiment data for pie chart
       const sentimentColors = {
         positive: "#10b981",
         negative: "#ef4444",
         neutral: "#6b7280",
-      }
+      };
 
       const transformedSentiment = sentiment.map((item) => ({
         name: item.sentiment,
         value: item.count,
         color: sentimentColors[item.sentiment] || "#6b7280",
-      }))
+      }));
 
       // Transform types data for bar chart
       const transformedTypes = types.map((item) => ({
         name: item.type,
         value: item.count,
-      }))
+      }));
 
       // Transform keywords data
       const transformedKeywords = keywords.slice(0, 10).map((item) => ({
         keyword: item.keyword,
         frequency: item.count,
-      }))
+      }));
 
       // Transform questions data
-      const transformedQuestions = questions.questions.map((question, index) => ({
-        question: question,
-        timestamp: new Date(Date.now() - index * 60000), // Mock timestamps for now
-        id: index,
-      }))
+      const transformedQuestions = questions.questions.map(
+        (question, index) => ({
+          question: question,
+          timestamp: new Date(Date.now() - index * 60000), // Mock timestamps for now
+          id: index,
+        })
+      );
 
-      setSentimentData(transformedSentiment)
-      setCategoryData(transformedTypes)
-      setKeywordData(transformedKeywords)
-      setRecentQuestions(transformedQuestions)
+      setSentimentData(transformedSentiment);
+      setCategoryData(transformedTypes);
+      setKeywordData(transformedKeywords);
+      setRecentQuestions(transformedQuestions);
     } catch (error) {
-      console.error("Failed to load visualization data:", error)
+      console.error("Failed to load visualization data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getQuestionCategory = (question) => {
-    const lowerQuestion = question.toLowerCase()
-    if (lowerQuestion.includes("salary") || lowerQuestion.includes("pay") || lowerQuestion.includes("compensation")) {
-      return { category: "Compensation", color: "#10b981" }
+    const lowerQuestion = question.toLowerCase();
+    if (
+      lowerQuestion.includes("salary") ||
+      lowerQuestion.includes("pay") ||
+      lowerQuestion.includes("compensation")
+    ) {
+      return { category: "Compensation", color: "#10b981" };
     } else if (
       lowerQuestion.includes("culture") ||
       lowerQuestion.includes("environment") ||
       lowerQuestion.includes("work life")
     ) {
-      return { category: "Culture", color: "#3b82f6" }
+      return { category: "Culture", color: "#3b82f6" };
     } else if (
       lowerQuestion.includes("management") ||
       lowerQuestion.includes("manager") ||
       lowerQuestion.includes("leadership")
     ) {
-      return { category: "Management", color: "#8b5cf6" }
+      return { category: "Management", color: "#8b5cf6" };
     } else if (
       lowerQuestion.includes("career") ||
       lowerQuestion.includes("growth") ||
       lowerQuestion.includes("promotion")
     ) {
-      return { category: "Career Growth", color: "#f59e0b" }
+      return { category: "Career Growth", color: "#f59e0b" };
     } else if (
       lowerQuestion.includes("benefit") ||
       lowerQuestion.includes("insurance") ||
       lowerQuestion.includes("vacation")
     ) {
-      return { category: "Benefits", color: "#ef4444" }
+      return { category: "Benefits", color: "#ef4444" };
     } else {
-      return { category: "General", color: "#6b7280" }
+      return { category: "General", color: "#6b7280" };
     }
-  }
+  };
 
   const questionCategories = recentQuestions.reduce((acc, q) => {
-    const { category } = getQuestionCategory(q.question)
-    acc[category] = (acc[category] || 0) + 1
-    return acc
-  }, {})
+    const { category } = getQuestionCategory(q.question);
+    acc[category] = (acc[category] || 0) + 1;
+    return acc;
+  }, {});
 
-  const questionCategoryData = Object.entries(questionCategories).map(([category, count]) => ({
-    name: category,
-    value: count,
-    color: getQuestionCategory(`${category.toLowerCase()}`).color,
-  }))
+  const questionCategoryData = Object.entries(questionCategories).map(
+    ([category, count]) => ({
+      name: category,
+      value: count,
+      color: getQuestionCategory(`${category.toLowerCase()}`).color,
+    })
+  );
+
+  const formatTime = (timestamp) => {
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   if (loading) {
     return (
@@ -127,7 +165,7 @@ export default function Visualizations({ company }) {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -137,7 +175,9 @@ export default function Visualizations({ company }) {
         <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Sentiment Distribution</CardTitle>
-            <CardDescription>Overall sentiment analysis of mentions</CardDescription>
+            <CardDescription>
+              Overall sentiment analysis of mentions
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {sentimentData.length > 0 ? (
@@ -162,8 +202,14 @@ export default function Visualizations({ company }) {
                 </ResponsiveContainer>
                 <div className="flex justify-center space-x-4 mt-4">
                   {sentimentData.map((item) => (
-                    <div key={item.name} className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <div
+                      key={item.name}
+                      className="flex items-center space-x-2"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
                       <span className="text-sm">
                         {item.name}: {item.value}
                       </span>
@@ -172,7 +218,9 @@ export default function Visualizations({ company }) {
                 </div>
               </>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">No sentiment data available</div>
+              <div className="text-center py-8 text-muted-foreground">
+                No sentiment data available
+              </div>
             )}
           </CardContent>
         </Card>
@@ -195,7 +243,9 @@ export default function Visualizations({ company }) {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">No category data available</div>
+              <div className="text-center py-8 text-muted-foreground">
+                No category data available
+              </div>
             )}
           </CardContent>
         </Card>
@@ -204,31 +254,46 @@ export default function Visualizations({ company }) {
         <Card className="col-span-1 md:col-span-2 lg:col-span-1">
           <CardHeader>
             <CardTitle>Top Keywords</CardTitle>
-            <CardDescription>Most frequently mentioned keywords</CardDescription>
+            <CardDescription>
+              Most frequently mentioned keywords
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {keywordData.length > 0 ? (
               <div className="space-y-2">
                 {keywordData.slice(0, 8).map((item, index) => {
-                  const maxFreq = Math.max(...keywordData.map((k) => k.frequency))
+                  const maxFreq = Math.max(
+                    ...keywordData.map((k) => k.frequency)
+                  );
                   return (
-                    <div key={item.keyword} className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{item.keyword}</span>
+                    <div
+                      key={item.keyword}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-sm font-medium">
+                        {item.keyword}
+                      </span>
                       <div className="flex items-center space-x-2">
                         <div className="w-20 bg-gray-200 rounded-full h-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full"
-                            style={{ width: `${(item.frequency / maxFreq) * 100}%` }}
+                            style={{
+                              width: `${(item.frequency / maxFreq) * 100}%`,
+                            }}
                           />
                         </div>
-                        <span className="text-sm text-muted-foreground w-8 text-right">{item.frequency}</span>
+                        <span className="text-sm text-muted-foreground w-8 text-right">
+                          {item.frequency}
+                        </span>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">No keyword data available</div>
+              <div className="text-center py-8 text-muted-foreground">
+                No keyword data available
+              </div>
             )}
           </CardContent>
         </Card>
@@ -242,42 +307,65 @@ export default function Visualizations({ company }) {
               <MessageSquare className="mr-2 h-5 w-5" />
               Recent Questions Asked
             </CardTitle>
-            <CardDescription>Latest questions from AI chat sessions about {company}</CardDescription>
+            <CardDescription>
+              Latest questions from AI chat sessions about {company}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {recentQuestions.length > 0 ? (
-              <div className="space-y-3 max-h-80 overflow-y-auto">
+              <div className="space-y-4 max-h-80 overflow-y-auto">
                 {recentQuestions.slice(0, 10).map((item, index) => {
-                  const { category, color } = getQuestionCategory(item.question)
+                  const { category, color } = getQuestionCategory(
+                    item.question
+                  );
                   return (
-                    <div key={item.id || index} className="flex items-start space-x-3 p-3 bg-muted/30 rounded-lg">
-                      <div className="flex-shrink-0">
-                        <User className="h-4 w-4 text-muted-foreground mt-1" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground line-clamp-2">{item.question}</p>
+                    <div
+                      key={item.id || index}
+                      className="flex items-start space-x-3"
+                    >
+                      {/* Avatar */}
+                      <Avatar className="h-8 w-8 flex-shrink-0">
+                        <AvatarFallback className="bg-blue-100">
+                          <User className="h-4 w-4 text-blue-600" />
+                        </AvatarFallback>
+                      </Avatar>
+
+                      {/* Message Content */}
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium">User</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatTime(item.timestamp)}
+                          </span>
+                        </div>
+
+                        <div className="inline-block max-w-[90%] px-4 py-3 bg-blue-500 text-white rounded-2xl rounded-tl-md text-sm leading-relaxed">
+                          <p>{item.question}</p>
+                        </div>
+
                         <div className="flex items-center space-x-2 mt-2">
                           <span
                             className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                            style={{ backgroundColor: `${color}20`, color: color }}
+                            style={{
+                              backgroundColor: `${color}20`,
+                              color: color,
+                            }}
                           >
                             {category}
                           </span>
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <Clock className="mr-1 h-3 w-3" />
-                            {new Date(item.timestamp).toLocaleDateString()}
-                          </div>
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <MessageSquare className="mx-auto h-12 w-12 mb-4 opacity-50" />
                 <p>No recent questions found</p>
-                <p className="text-xs mt-1">Start asking questions in the AI chat to see them here</p>
+                <p className="text-xs mt-1">
+                  Start asking questions in the AI chat to see them here
+                </p>
               </div>
             )}
           </CardContent>
@@ -287,7 +375,9 @@ export default function Visualizations({ company }) {
         <Card>
           <CardHeader>
             <CardTitle>Question Categories</CardTitle>
-            <CardDescription>Distribution of question types asked about {company}</CardDescription>
+            <CardDescription>
+              Distribution of question types asked about {company}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {questionCategoryData.length > 0 ? (
@@ -312,8 +402,14 @@ export default function Visualizations({ company }) {
                 </ResponsiveContainer>
                 <div className="flex flex-wrap justify-center gap-2 mt-4">
                   {questionCategoryData.map((item) => (
-                    <div key={item.name} className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <div
+                      key={item.name}
+                      className="flex items-left space-x-2"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
                       <span className="text-xs">
                         {item.name}: {item.value}
                       </span>
@@ -325,12 +421,14 @@ export default function Visualizations({ company }) {
               <div className="text-center py-8 text-muted-foreground">
                 <BarChart className="mx-auto h-12 w-12 mb-4 opacity-50" />
                 <p>No question categories yet</p>
-                <p className="text-xs mt-1">Categories will appear as users ask questions</p>
+                <p className="text-xs mt-1">
+                  Categories will appear as users ask questions
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

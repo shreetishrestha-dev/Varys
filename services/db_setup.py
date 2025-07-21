@@ -77,11 +77,12 @@ def create_companies_table():
             return
 
         conn.execute(text("""
-        CREATE TABLE companies (
-            name TEXT PRIMARY KEY,
-            status TEXT DEFAULT 'preparing',
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
+            CREATE TABLE companies (
+                name TEXT PRIMARY KEY,
+                status TEXT DEFAULT 'preparing',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                log_file TEXT
+            )
         """))
         conn.commit()
         print("Table 'companies' created.")

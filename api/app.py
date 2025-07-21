@@ -1,18 +1,22 @@
 from typing import Optional
+from requests import Session
 from sqlalchemy import text
 
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
+from models.companies import Company
 from tools.retrieve_mentions_tool import retrieve_mentions
 
 from services.rag.chat import get_rag_response, get_memory
 from services.db_setup import engine
-from services.companies import get_company_status
+from services.companies import get_company_status, set_company_status
 
 from schemas.chat_input import ChatInput
 from schemas.script_run_request import ScriptRunRequest
+
+from config import DB_CONNECTION_URL
 
 import subprocess
 import os
@@ -30,6 +34,7 @@ app.add_middleware(
 
 @app.get("/")
 def index():
+    print("db", DB_CONNECTION_URL)
     return {"message": "Company Review API is running 🚀"}
 
 @app.get("/mentions")
@@ -122,6 +127,7 @@ def run_company_script(request: ScriptRunRequest):
         log_dir = "logs"
         os.makedirs(log_dir, exist_ok=True)
         log_file = os.path.join(log_dir, f"{request.company}_{int(time.time())}.log")
+        set_company_status(request.company, "Started", log_file=log_file)
         command = ["python", "main.py", request.company, f"--limit={request.limit}"]
         if request.all_steps:
             command.append("--all")
@@ -137,7 +143,6 @@ def run_company_script(request: ScriptRunRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/logs/{logfile}")
 def get_log_file(logfile: str):
     log_path = os.path.join("logs", logfile)
@@ -185,3 +190,28 @@ def get_recent_questions(company: str = Query(...), limit: int = Query(10)):
     with engine.connect() as conn:
         result = conn.execute(text(query), {"company": company, "limit": limit}).fetchall()
         return {"questions": [row[0] for row in result]}
+
+
+# New route to fetch active processes from the backend
+@app.get("/companies/active-processes")
+def get_active_processes():
+    query = """
+        SELECT name, status, updated_at, log_file
+        FROM companies
+        WHERE status NOT IN ('Completed', 'Failed')
+        ORDER BY updated_at DESC
+    """
+    with engine.connect() as conn:
+        result = conn.execute(text(query)).fetchall()
+        return [
+            {
+                "company": row[0],
+                "status": row[1],
+                "lastUpdated": row[2].isoformat() if hasattr(row[2], "isoformat") else row[2],
+                "log_file": row[3],
+                "currentStatus": row[1],
+                "startTime": row[2],
+                "isCompleted": row[1] == "RAG Retriever Ready"
+            }
+            for row in result
+        ]

@@ -26,30 +26,36 @@ args = parser.parse_args()
 
 run_all = args.all
 
-set_company_status(args.company, "Started")
-if args.scrape or run_all:
-    run_scraping_for_company(company=args.company, limit=args.limit)
-set_company_status(args.company, "Scraping Completed")
+try:
+    set_company_status(args.company, "Started")
+    if args.scrape or run_all:
+        run_scraping_for_company(company=args.company, limit=args.limit)
+    set_company_status(args.company, "Scraping Completed")
 
-if args.gather or run_all:
-    run_info_gathering(company=args.company)
-set_company_status(args.company, "Info Gathering Completed")
+    if args.gather or run_all:
+        run_info_gathering(company=args.company)
+    set_company_status(args.company, "Info Gathering Completed")
 
-if args.preprocess or run_all:
-    preprocess_mentions(company=args.company)
-set_company_status(args.company, "Preprocessing Completed")
+    if args.preprocess or run_all:
+        preprocess_mentions(company=args.company)
+    set_company_status(args.company, "Preprocessing Completed")
 
-if args.populate_agent or run_all:
-    populate_mentions(company=args.company)
-set_company_status(args.company, "DB Population Completed")
+    if args.populate_agent or run_all:
+        populate_mentions(company=args.company)
+    set_company_status(args.company, "DB Population Completed")
 
-if args.embed or run_all:
-    build_vectorstore_from_db(company=args.company)
-set_company_status(args.company, "Embedding Completed")
+    if args.embed or run_all:
+        build_vectorstore_from_db(company=args.company)
+    set_company_status(args.company, "Embedding Completed")
 
-if args.rag_retriever:
-    retriever = get_company_retriever(args.company)
-    print("✅ Retriever ready for use")
-set_company_status(args.company, "RAG Retriever Ready")
+    if args.rag_retriever:
+        retriever = get_company_retriever(args.company)
+        print("✅ Retriever ready for use")
+    set_company_status(args.company, "RAG Retriever Ready")
 
-print(f"✅ Pipeline completed for {args.company}")
+    print(f"✅ Pipeline completed for {args.company}")
+    set_company_status(args.company, "Completed")
+except Exception as e:
+    print(f"❌ Error occurred: {e}")
+    set_company_status(args.company, "Failed", log_file=str(e))
+    raise e

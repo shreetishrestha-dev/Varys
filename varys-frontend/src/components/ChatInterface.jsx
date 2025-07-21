@@ -100,7 +100,7 @@ export default function ChatInterface({ selectedCompany }) {
 
   return (
     <Card className="h-[700px] flex flex-col bg-gradient-to-b from-background to-muted/20">
-      <CardHeader className="border-b bg-background/80 backdrop-blur-sm">
+      <CardHeader className="border-b bg-background/80 backdrop-blur-sm flex-shrink-0">
         <CardTitle className="flex items-center">
           <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mr-3">
             <Sparkles className="h-5 w-5 text-white" />
@@ -114,134 +114,140 @@ export default function ChatInterface({ selectedCompany }) {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0">
-        {/* Chat Messages */}
-        <ScrollArea className="flex-1 px-4 py-4" ref={scrollAreaRef}>
-          <div className="space-y-4">
-            {messages.length === 0 && !isLoading && (
-              <div className="text-center py-12">
-                <div className="p-4 bg-gradient-to-br from-blue-500/10 to-purple-600/10 rounded-full w-fit mx-auto mb-6">
-                  <Bot className="h-12 w-12 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Start a conversation!
-                </h3>
-                <p className="text-muted-foreground mb-6">
-                  Ask me anything about company insights and data.
-                </p>
-                {selectedCompany && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-foreground">
-                      Try asking:
-                    </p>
-                    <div className="flex flex-wrap gap-2 justify-center max-w-md mx-auto">
-                      {suggestedQuestions.map((question, index) => (
-                        <Button
-                          key={index}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setInput(question)}
-                          className="text-xs hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors"
-                        >
-                          {question}
-                        </Button>
-                      ))}
-                    </div>
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+        {/* Chat Messages - Scrollable Area */}
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full px-4 py-4" ref={scrollAreaRef}>
+            <div className="space-y-4 min-h-full">
+              {messages.length === 0 && !isLoading && (
+                <div className="text-center py-12">
+                  <div className="p-4 bg-gradient-to-br from-blue-500/10 to-purple-600/10 rounded-full w-fit mx-auto mb-6">
+                    <Bot className="h-12 w-12 text-blue-600" />
                   </div>
-                )}
-              </div>
-            )}
+                  <h3 className="text-lg font-semibold mb-2">
+                    Start a conversation!
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Ask me anything about company insights and data.
+                  </p>
+                  {selectedCompany && (
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-foreground">
+                        Try asking:
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center max-w-md mx-auto">
+                        {suggestedQuestions.map((question, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setInput(question)}
+                            className="text-xs hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors"
+                          >
+                            {question}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex items-start space-x-3 ${
-                  message.role === "user" ? "flex-row-reverse" : "flex-row"
-                }`}
-              >
-                {/* Avatar */}
-                <Avatar className="h-8 w-8 flex-shrink-0 mx-2">
-                  <AvatarFallback
-                    className={
-                      message.role === "user" ? "bg-blue-100" : "bg-purple-100"
-                    }
-                  >
-                    {message.role === "user" ? (
-                      <User className="h-4 w-4 text-blue-600" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-purple-600" />
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-                {/* Message Content */}
+              {messages.map((message) => (
                 <div
-                  className={`flex-1 space-y-1 ${
-                    message.role === "user" ? "text-right" : "text-left"
+                  key={message.id}
+                  className={`flex items-start space-x-3 ${
+                    message.role === "user" ? "flex-row-reverse" : "flex-row"
                   }`}
                 >
+                  {/* Avatar */}
+                  <Avatar className="h-8 w-8 flex-shrink-0 mx-2">
+                    <AvatarFallback
+                      className={
+                        message.role === "user"
+                          ? "bg-blue-100"
+                          : "bg-purple-100"
+                      }
+                    >
+                      {message.role === "user" ? (
+                        <User className="h-4 w-4 text-blue-600" />
+                      ) : (
+                        <Bot className="h-4 w-4 text-purple-600" />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Message Content */}
                   <div
-                    className={`flex items-center space-x-2 ${
-                      message.role === "user" ? "justify-end" : "justify-start"
+                    className={`flex-1 space-y-1 ${
+                      message.role === "user" ? "text-right" : "text-left"
                     }`}
                   >
-                    <span className="text-sm font-medium">
-                      {message.role === "user" ? "You" : "Varys AI"}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatTime(message.timestamp)}
-                    </span>
-                  </div>
-                  <div
-                    className={`inline-block max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                      message.role === "user"
-                        ? "bg-blue-500 text-white rounded-tl-md"
-                        : "bg-muted border rounded-tl-md"
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {/* Loading indicator */}
-            {isLoading && (
-              <div className="flex items-start space-x-3">
-                <Avatar className="h-8 w-8 flex-shrink-0 mx-2">
-                  <AvatarFallback className="bg-purple-100">
-                    <Bot className="h-4 w-4 text-purple-600" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium">Varys AI</span>
-                    <span className="text-xs text-muted-foreground">
-                      thinking...
-                    </span>
-                  </div>
-                  <div className="inline-block bg-muted border rounded-2xl rounded-tl-md px-4 py-3">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" />
-                      <div
-                        className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      />
-                      <div
-                        className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      />
+                    <div
+                      className={`flex items-center space-x-2 ${
+                        message.role === "user"
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
+                      <span className="text-sm font-medium">
+                        {message.role === "user" ? "You" : "Varys AI"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatTime(message.timestamp)}
+                      </span>
+                    </div>
+                    <div
+                      className={`inline-block max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                        message.role === "user"
+                          ? "bg-blue-500 text-white rounded-tl-md"
+                          : "bg-muted border rounded-tl-md"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap">{message.content}</p>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              ))}
 
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
+              {/* Loading indicator */}
+              {isLoading && (
+                <div className="flex items-start space-x-3">
+                  <Avatar className="h-8 w-8 flex-shrink-0 mx-2">
+                    <AvatarFallback className="bg-purple-100">
+                      <Bot className="h-4 w-4 text-purple-600" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium">Varys AI</span>
+                      <span className="text-xs text-muted-foreground">
+                        thinking...
+                      </span>
+                    </div>
+                    <div className="inline-block bg-muted border rounded-2xl rounded-tl-md px-4 py-3">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" />
+                        <div
+                          className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.1s" }}
+                        />
+                        <div
+                          className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-        {/* Input Form */}
-        <div className="border-t bg-background/80 backdrop-blur-sm p-4">
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Input Form - Fixed at bottom */}
+        <div className="border-t bg-background/80 backdrop-blur-sm p-4 flex-shrink-0">
           {!selectedCompany && (
             <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm text-amber-800">

@@ -108,12 +108,13 @@ export default function AddCompanyForm({
         onProcessStarted(companyName, result);
       }
 
-      // Auto-navigate to processing monitor after 2 seconds
-      setTimeout(() => {
-        if (onTabChange) {
-          onTabChange("monitor");
-        }
-      }, 2000);
+      // Immediately switch to monitor tab and select company
+      if (onCompanySelect) {
+        onCompanySelect(companyName.trim());
+      }
+      if (onTabChange) {
+        onTabChange("monitor");
+      }
     } catch (err) {
       setError(err.message || "Failed to start processing");
     } finally {

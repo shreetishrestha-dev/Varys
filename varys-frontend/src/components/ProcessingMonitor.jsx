@@ -103,31 +103,49 @@ export default function ProcessingMonitor({
     startStatusPolling();
   }, []);
 
-  // Select company if provided
+  // Select company if provided from parent
   useEffect(() => {
     if (selectedCompany && processes.length > 0) {
       const process = processes.find((p) => p.company === selectedCompany);
-      if (process) {
+      if (
+        process &&
+        (!selectedProcess || selectedProcess.company !== selectedCompany)
+      ) {
         setSelectedProcess(process);
       }
     }
   }, [selectedCompany, processes]);
 
-  // Start log polling when process is selected
+  // Start log polling when process is selected or changed
   useEffect(() => {
+    // Clear existing logs when switching processes
+    setLogs("");
+
+    // Stop any existing log polling
+    if (logPollingRef.current) {
+      console.log("Stopping previous log polling");
+      clearInterval(logPollingRef.current);
+      logPollingRef.current = null;
+    }
+
     if (selectedProcess && selectedProcess.log_file) {
+      console.log("Starting new log polling for:", selectedProcess.company);
+      // Start polling for the new process
       startLogPolling(selectedProcess.log_file);
-    } else {
+    }
+
+    // Cleanup function to stop polling when selectedProcess changes
+    return () => {
       if (logPollingRef.current) {
         clearInterval(logPollingRef.current);
+        logPollingRef.current = null;
       }
-      setLogs("");
-    }
-  }, [selectedProcess]);
+    };
+  }, [selectedProcess]); // Watch selectedProcess object
 
   // Auto-scroll logs to bottom
   useEffect(() => {
-    if (logScrollRef.current && autoRefreshLogs) {
+    if (logScrollRef.current && autoRefreshLogs && logs) {
       logScrollRef.current.scrollTop = logScrollRef.current.scrollHeight;
     }
   }, [logs, autoRefreshLogs]);
@@ -137,11 +155,22 @@ export default function ProcessingMonitor({
     setError("");
     try {
       const activeProcesses = await getActiveProcesses();
+      console.log("Loaded processes from backend:", activeProcesses);
       setProcesses(activeProcesses);
 
       // If no process is selected but we have processes, select the first one
       if (!selectedProcess && activeProcesses.length > 0) {
         setSelectedProcess(activeProcesses[0]);
+      }
+
+      // If selected process exists, update it with latest data
+      if (selectedProcess) {
+        const updatedProcess = activeProcesses.find(
+          (p) => p.company === selectedProcess.company
+        );
+        if (updatedProcess) {
+          setSelectedProcess(updatedProcess);
+        }
       }
     } catch (err) {
       setError("Failed to load processes");
@@ -166,6 +195,27 @@ export default function ProcessingMonitor({
           );
           if (updatedProcess) {
             setSelectedProcess(updatedProcess);
+
+            // Stop status polling if the selected process is completed
+            if (updatedProcess.isCompleted) {
+              console.log(
+                `Process for ${updatedProcess.company} is completed, stopping status polling`
+              );
+              if (statusPollingRef.current) {
+                clearInterval(statusPollingRef.current);
+                statusPollingRef.current = null;
+              }
+            }
+          }
+        }
+
+        // If all processes are completed, stop polling
+        const hasActiveProcesses = activeProcesses.some((p) => !p.isCompleted);
+        if (!hasActiveProcesses) {
+          console.log("All processes completed, stopping status polling");
+          if (statusPollingRef.current) {
+            clearInterval(statusPollingRef.current);
+            statusPollingRef.current = null;
           }
         }
       } catch (error) {
@@ -175,26 +225,95 @@ export default function ProcessingMonitor({
   };
 
   const startLogPolling = (logFile) => {
-    if (logPollingRef.current) clearInterval(logPollingRef.current);
+    console.log("Starting log polling for:", logFile);
 
     // Initial log fetch
     fetchLogs(logFile);
 
-    // Set up periodic log fetching
-    logPollingRef.current = setInterval(() => {
-      if (autoRefreshLogs) {
-        fetchLogs(logFile);
-      }
-    }, 5000); // Refresh logs every 5 seconds
+    // Only start polling if the process is not completed
+    if (selectedProcess && !selectedProcess.isCompleted) {
+      // Set up periodic log fetching
+      logPollingRef.current = setInterval(() => {
+        if (
+          autoRefreshLogs &&
+          selectedProcess &&
+          !selectedProcess.isCompleted
+        ) {
+          fetchLogs(logFile);
+        } else if (selectedProcess && selectedProcess.isCompleted) {
+          // Stop log polling if process is completed
+          console.log(
+            `Process for ${selectedProcess.company} is completed, stopping log polling`
+          );
+          if (logPollingRef.current) {
+            clearInterval(logPollingRef.current);
+            logPollingRef.current = null;
+          }
+        }
+      }, 5000); // Refresh logs every 5 seconds
+    }
   };
 
   const fetchLogs = async (logFile) => {
     try {
+      console.log("=== FETCHING LOGS ===");
+      console.log("Requested log file:", logFile);
+      console.log("Selected process:", selectedProcess?.company);
+
       const logContent = await getLogFile(logFile);
+      console.log("Log content length:", logContent.length);
+      console.log("First 100 chars:", logContent.substring(0, 100));
+
       setLogs(logContent);
     } catch (error) {
       console.error("Error fetching logs:", error);
+      setLogs(
+        `Error loading logs for ${selectedProcess?.company}: ${error.message}`
+      );
     }
+  };
+
+  const handleProcessSelection = (companyName) => {
+    const process = processes.find((p) => p.company === companyName);
+    if (process) {
+      console.log("=== SELECTING NEW PROCESS ===");
+      console.log("Company:", companyName);
+      console.log("Log file:", process.log_file);
+      console.log("Previous process:", selectedProcess?.company);
+      console.log("Previous log file:", selectedProcess?.log_file);
+
+      // Clear logs immediately to prevent showing wrong logs
+      setLogs("");
+
+      // Stop any existing polling
+      if (logPollingRef.current) {
+        clearInterval(logPollingRef.current);
+        logPollingRef.current = null;
+      }
+
+      // Set the new process
+      setSelectedProcess(process);
+
+      // Force immediate log fetch for new process
+      if (process.log_file) {
+        console.log("Force fetching logs for:", process.log_file);
+        fetchLogs(process.log_file);
+      }
+
+      if (onCompanySelect) {
+        onCompanySelect(companyName);
+      }
+    }
+  };
+
+  const handleProcessCardClick = (process) => {
+    console.log(
+      "Card clicked for:",
+      process.company,
+      "with log file:",
+      process.log_file
+    );
+    handleProcessSelection(process.company);
   };
 
   const getStepStatus = (step, currentStatus) => {
@@ -205,6 +324,11 @@ export default function ProcessingMonitor({
     );
     const stepIndex = STATUS_STEPS.findIndex((s) => s.id === step.id);
 
+    // If current status is "RAG Retriever Ready", all steps including the last one should be completed
+    if (currentStatus === "RAG Retriever Ready") {
+      return "completed";
+    }
+
     if (stepIndex < currentIndex) return "completed";
     if (stepIndex === currentIndex) return "processing";
     return "pending";
@@ -212,6 +336,8 @@ export default function ProcessingMonitor({
 
   const getCurrentProgress = (currentStatus) => {
     if (!currentStatus) return 0;
+    if (currentStatus === "RAG Retriever Ready") return 100;
+
     const currentStep = STATUS_STEPS.find((s) => s.status === currentStatus);
     return currentStep ? currentStep.progress : 0;
   };
@@ -289,6 +415,13 @@ export default function ProcessingMonitor({
     return new Date(timestamp).toLocaleString();
   };
 
+  const manualRefreshLogs = () => {
+    if (selectedProcess && selectedProcess.log_file) {
+      console.log("Manual refresh for:", selectedProcess.log_file);
+      fetchLogs(selectedProcess.log_file);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -325,10 +458,20 @@ export default function ProcessingMonitor({
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Processing Monitor</span>
-            <Button variant="outline" size="sm" onClick={loadProcesses}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
+            <div className="flex items-center space-x-2">
+              {selectedProcess && selectedProcess.isCompleted && (
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800"
+                >
+                  Polling Stopped - Process Complete
+                </Badge>
+              )}
+              <Button variant="outline" size="sm" onClick={loadProcesses}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh
+              </Button>
+            </div>
           </CardTitle>
           <CardDescription>
             Monitor company processing tasks and view real-time logs
@@ -342,11 +485,7 @@ export default function ProcessingMonitor({
               </label>
               <Select
                 value={selectedProcess?.company || ""}
-                onValueChange={(company) => {
-                  const process = processes.find((p) => p.company === company);
-                  setSelectedProcess(process);
-                  if (onCompanySelect) onCompanySelect(company);
-                }}
+                onValueChange={handleProcessSelection}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choose a processing task" />
@@ -381,10 +520,7 @@ export default function ProcessingMonitor({
                       ? "ring-2 ring-primary"
                       : ""
                   }`}
-                  onClick={() => {
-                    setSelectedProcess(process);
-                    if (onCompanySelect) onCompanySelect(process.company);
-                  }}
+                  onClick={() => handleProcessCardClick(process)}
                 >
                   <CardContent className="p-4">
                     <div className="space-y-2">
@@ -431,8 +567,7 @@ export default function ProcessingMonitor({
                 Processing Details - {selectedProcess.company}
               </CardTitle>
               <CardDescription>
-                Process ID: {selectedProcess.pid} | Log File:{" "}
-                {selectedProcess.log_file}
+                Log File: {selectedProcess.log_file || "Not available"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -452,6 +587,14 @@ export default function ProcessingMonitor({
                   <span className="font-medium text-foreground">
                     {selectedProcess.currentStatus || "Unknown"}
                   </span>
+                  {selectedProcess.isCompleted && (
+                    <Badge
+                      className="ml-2 bg-green-100 text-green-800"
+                      variant="secondary"
+                    >
+                      Complete
+                    </Badge>
+                  )}
                 </p>
               </div>
 
@@ -504,11 +647,19 @@ export default function ProcessingMonitor({
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center">
                   <FileText className="mr-2 h-5 w-5" />
-                  Processing Logs
+                  Processing Logs - {selectedProcess.company}
                   {logFilter !== "all" && (
                     <span className="ml-2 text-sm text-muted-foreground">
                       (Filtered: {logFilter})
                     </span>
+                  )}
+                  {selectedProcess.isCompleted && (
+                    <Badge
+                      className="ml-2 bg-green-100 text-green-800"
+                      variant="secondary"
+                    >
+                      Final Logs
+                    </Badge>
                   )}
                 </div>
                 <div className="flex items-center space-x-2">
@@ -516,6 +667,7 @@ export default function ProcessingMonitor({
                     variant="outline"
                     size="sm"
                     onClick={() => setAutoRefreshLogs(!autoRefreshLogs)}
+                    disabled={selectedProcess.isCompleted}
                   >
                     {autoRefreshLogs ? (
                       <>
@@ -532,10 +684,7 @@ export default function ProcessingMonitor({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() =>
-                      selectedProcess.log_file &&
-                      fetchLogs(selectedProcess.log_file)
-                    }
+                    onClick={manualRefreshLogs}
                   >
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Refresh
@@ -552,8 +701,22 @@ export default function ProcessingMonitor({
                 </div>
               </CardTitle>
               <CardDescription>
-                Real-time logs from the processing script. Auto-refresh:{" "}
-                {autoRefreshLogs ? "ON" : "OFF"}
+                {selectedProcess.isCompleted ? (
+                  <>
+                    Final logs for {selectedProcess.company} (Process completed)
+                  </>
+                ) : (
+                  <>
+                    Real-time logs from the processing script for{" "}
+                    {selectedProcess.company}. Auto-refresh:{" "}
+                    {autoRefreshLogs ? "ON" : "OFF"}
+                  </>
+                )}
+                <br />
+                <span className="text-xs text-muted-foreground">
+                  Log file: {selectedProcess.log_file || "Not available"} | Logs
+                  length = {logs.length}
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -576,23 +739,29 @@ export default function ProcessingMonitor({
                   className="h-96 w-full rounded-md border bg-gray-50"
                   ref={logScrollRef}
                 >
-                  <div className="p-4 space-y-1 align-left">
+                  <div className="p-4 space-y-1 text-left">
                     {logs ? (
-                      getFilteredLogs()
-                        .split("\n")
-                        .map((line, index) => (
-                          <div
-                            key={index}
-                            className={`text-xs font-mono text-left ${getLogLineColor(
-                              line
-                            )}`}
-                          >
-                            {line || "\u00A0"}
-                          </div>
-                        ))
+                      logs.trim() === "" ? (
+                        <div className="text-xs text-muted-foreground font-mono">
+                          No logs available yet...
+                        </div>
+                      ) : (
+                        getFilteredLogs()
+                          .split("\n")
+                          .map((line, index) => (
+                            <div
+                              key={index}
+                              className={`text-xs font-mono text-left ${getLogLineColor(
+                                line
+                              )}`}
+                            >
+                              {line || "\u00A0"}
+                            </div>
+                          ))
+                      )
                     ) : (
                       <div className="text-xs text-muted-foreground font-mono">
-                        Loading logs...
+                        Loading logs for {selectedProcess.company}...
                       </div>
                     )}
                   </div>

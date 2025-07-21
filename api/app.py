@@ -126,9 +126,10 @@ def run_company_script(request: ScriptRunRequest):
     try:
         log_dir = "logs"
         os.makedirs(log_dir, exist_ok=True)
+        filename = f"{request.company}_{int(time.time())}.log"
         log_file = os.path.join(log_dir, f"{request.company}_{int(time.time())}.log")
-        set_company_status(request.company, "Started", log_file=log_file)
-        command = ["python", "main.py", request.company, f"--limit={request.limit}"]
+
+        command = ["python", "main.py", request.company, f"--limit={request.limit}", f"--log-file={filename}"]
         if request.all_steps:
             command.append("--all")
 
@@ -136,6 +137,7 @@ def run_company_script(request: ScriptRunRequest):
             process = subprocess.Popen(command, stdout=f, stderr=subprocess.STDOUT, text=True)
 
         return {
+            "command": " ".join(command),
             "message": f"Script for '{request.company}' started successfully.",
             "pid": process.pid,
             "log_file": log_file,
@@ -143,6 +145,7 @@ def run_company_script(request: ScriptRunRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
 @app.get("/logs/{logfile}")
 def get_log_file(logfile: str):
     log_path = os.path.join("logs", logfile)
@@ -215,3 +218,34 @@ def get_active_processes():
             }
             for row in result
         ]
+        
+@app.get("/logs/list")
+def list_log_files(company: str = Query(...)):
+    """List all log files for a specific company"""
+    try:
+        log_dir = "logs"
+        if not os.path.exists(log_dir):
+            return []
+        
+        # Find all log files for this company
+        log_files = []
+        for filename in os.listdir(log_dir):
+            if filename.startswith(f"{company}_") and filename.endswith(".log"):
+                log_path = os.path.join(log_dir, filename)
+                if os.path.isfile(log_path):
+                    # Get file stats
+                    stat = os.stat(log_path)
+                    log_files.append({
+                        "filename": filename,
+                        "path": f"logs/{filename}",
+                        "size": stat.st_size,
+                        "created": stat.st_ctime,
+                        "modified": stat.st_mtime
+                    })
+        
+        # Sort by creation time, newest first
+        log_files.sort(key=lambda x: x["created"], reverse=True)
+        return log_files
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

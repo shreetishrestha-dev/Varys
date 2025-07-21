@@ -19,6 +19,7 @@ parser.add_argument("--preprocess", action="store_true", default=False, help="Ru
 parser.add_argument("--populate-agent", action="store_true", default=False, help="Populate DB with enriched mentions via agent")
 parser.add_argument("--embed", action="store_true", default=False, help="Build vector store from DB")
 parser.add_argument("--rag-retriever", action="store_true", default=False, help="Run RAG retriever for the company")
+parser.add_argument("--log-file", type=str, help="Log file to store the output")
 
 parser.add_argument("--all", action="store_true", help="Run all pipeline stages (scrape → gather → preprocess → populate → embed)")
 
@@ -27,7 +28,7 @@ args = parser.parse_args()
 run_all = args.all
 
 try:
-    set_company_status(args.company, "Started")
+    set_company_status(args.company, "Started", log_file=args.log_file)
     if args.scrape or run_all:
         run_scraping_for_company(company=args.company, limit=args.limit)
     set_company_status(args.company, "Scraping Completed")

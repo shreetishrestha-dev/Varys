@@ -281,7 +281,7 @@ export const getRecentCompanyActivity = async () => {
 // Get log file content
 export const getLogFile = async (logFile) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/logs/${logFile}`)
+    const response = await fetch(`${API_BASE_URL}/${logFile}`)
     if (!response.ok) throw new Error("Failed to fetch log file")
     return await response.text()
   } catch (error) {

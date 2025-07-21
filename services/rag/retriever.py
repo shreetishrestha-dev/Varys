@@ -1,7 +1,7 @@
 # services/rag/retriever.py
 
-from langchain.vectorstores import FAISS
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import OpenAIEmbeddings
 
 def get_company_retriever(company: str):
     path = f"vectorstores/{company.lower()}_mentions"

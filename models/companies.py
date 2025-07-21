@@ -9,5 +9,6 @@ class Company(Base):
 
     name = Column(String, primary_key=True)
     status = Column(String, nullable=False, default="Preparing")
+    log_file = Column(String, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow)
 

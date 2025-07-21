@@ -63,10 +63,12 @@ export default function Dashboard() {
           <h2 className="text-3xl font-bold tracking-tight">
             Intelligence Dashboard
           </h2>
-          <CompanySelector
-            selectedCompany={selectedCompany}
-            onCompanyChange={setSelectedCompany}
-          />
+          {activeTab !== "add-company" && activeTab !== "monitor" && (
+            <CompanySelector
+              selectedCompany={selectedCompany}
+              onCompanyChange={setSelectedCompany}
+            />
+          )}
         </div>
 
         <Tabs

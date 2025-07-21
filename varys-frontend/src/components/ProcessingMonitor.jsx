@@ -473,9 +473,7 @@ export default function ProcessingMonitor({
               </Button>
             </div>
           </CardTitle>
-          <CardDescription>
-            Monitor company processing tasks and view real-time logs
-          </CardDescription>
+         
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -487,9 +485,7 @@ export default function ProcessingMonitor({
                 value={selectedProcess?.company || ""}
                 onValueChange={handleProcessSelection}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose a processing task" />
-                </SelectTrigger>
+                
                 <SelectContent>
                   {processes.map((process) => (
                     <SelectItem key={process.company} value={process.company}>

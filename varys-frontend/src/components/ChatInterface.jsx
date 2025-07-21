@@ -156,12 +156,16 @@ export default function ChatInterface({ selectedCompany }) {
               <div
                 key={message.id}
                 className={`flex items-start space-x-3 ${
-                  message.role === "user" ? "flex-row" : "flex-row-reverse"
+                  message.role === "user" ? "flex-row-reverse" : "flex-row"
                 }`}
               >
                 {/* Avatar */}
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarFallback className={message.role === "user" ? "bg-blue-100" : "bg-purple-100"}>
+                <Avatar className="h-8 w-8 flex-shrink-0 mx-2">
+                  <AvatarFallback
+                    className={
+                      message.role === "user" ? "bg-blue-100" : "bg-purple-100"
+                    }
+                  >
                     {message.role === "user" ? (
                       <User className="h-4 w-4 text-blue-600" />
                     ) : (
@@ -170,12 +174,30 @@ export default function ChatInterface({ selectedCompany }) {
                   </AvatarFallback>
                 </Avatar>
                 {/* Message Content */}
-                <div className={`flex-1 space-y-1 ${message.role === "user" ? "text-left" : "text-right"}`}>
-                  <div className={`flex items-center space-x-2 ${message.role === "user" ? "justify-start" : "justify-end"}`}>
-                    <span className="text-sm font-medium">{message.role === "user" ? "You" : "Varys AI"}</span>
-                    <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
+                <div
+                  className={`flex-1 space-y-1 ${
+                    message.role === "user" ? "text-right" : "text-left"
+                  }`}
+                >
+                  <div
+                    className={`flex items-center space-x-2 ${
+                      message.role === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <span className="text-sm font-medium">
+                      {message.role === "user" ? "You" : "Varys AI"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatTime(message.timestamp)}
+                    </span>
                   </div>
-                  <div className={`inline-block max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${message.role === "user" ? "bg-blue-500 text-white rounded-tl-md" : "bg-muted border rounded-tl-md"}`}>
+                  <div
+                    className={`inline-block max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                      message.role === "user"
+                        ? "bg-blue-500 text-white rounded-tl-md"
+                        : "bg-muted border rounded-tl-md"
+                    }`}
+                  >
                     <p className="whitespace-pre-wrap">{message.content}</p>
                   </div>
                 </div>
@@ -185,7 +207,7 @@ export default function ChatInterface({ selectedCompany }) {
             {/* Loading indicator */}
             {isLoading && (
               <div className="flex items-start space-x-3">
-                <Avatar className="h-8 w-8 flex-shrink-0">
+                <Avatar className="h-8 w-8 flex-shrink-0 mx-2">
                   <AvatarFallback className="bg-purple-100">
                     <Bot className="h-4 w-4 text-purple-600" />
                   </AvatarFallback>

@@ -18,6 +18,17 @@ export const fetchCompanies = async () => {
   }
 }
 
+// Check if company exists in database
+export const checkCompanyExists = async (companyName) => {
+  try {
+    const companies = await fetchCompanies()
+    return companies.some((company) => company.name.toLowerCase() === companyName.toLowerCase())
+  } catch (error) {
+    console.error("Error checking company existence:", error)
+    return false
+  }
+}
+
 // Fetch mentions for a specific company
 export const fetchCompanyMentions = async (companyId, filters = {}) => {
   try {
@@ -92,10 +103,104 @@ export const processNewCompany = async (companyName, options = {}) => {
     })
 
     if (!response.ok) throw new Error("Failed to start processing")
-    return await response.json()
+    const result = await response.json()
+
+    // Store processing info in localStorage for persistence
+    const processInfo = {
+      ...result,
+      company: companyName,
+      startTime: Date.now(),
+      limit: options.limit || 100,
+    }
+
+    // Get existing processes and add new one
+    const existingProcesses = getStoredProcesses()
+    existingProcesses[companyName] = processInfo
+    localStorage.setItem("varys_processes", JSON.stringify(existingProcesses))
+
+    return result
   } catch (error) {
     console.error("Error processing company:", error)
     throw error
+  }
+}
+
+// Get stored processes from localStorage
+export const getStoredProcesses = () => {
+  try {
+    const stored = localStorage.getItem("varys_processes")
+    return stored ? JSON.parse(stored) : {}
+  } catch (error) {
+    console.error("Error getting stored processes:", error)
+    return {}
+  }
+}
+
+// Update process status in localStorage
+export const updateProcessStatus = (companyName, status) => {
+  try {
+    const processes = getStoredProcesses()
+    if (processes[companyName]) {
+      processes[companyName].currentStatus = status
+      processes[companyName].lastUpdated = Date.now()
+      localStorage.setItem("varys_processes", JSON.stringify(processes))
+    }
+  } catch (error) {
+    console.error("Error updating process status:", error)
+  }
+}
+
+// Remove completed process from localStorage
+export const removeCompletedProcess = (companyName) => {
+  try {
+    const processes = getStoredProcesses()
+    delete processes[companyName]
+    localStorage.setItem("varys_processes", JSON.stringify(processes))
+  } catch (error) {
+    console.error("Error removing completed process:", error)
+  }
+}
+
+// Get all active processes
+export const getActiveProcesses = async () => {
+  try {
+    const storedProcesses = getStoredProcesses()
+    const activeProcesses = []
+
+    for (const [companyName, processInfo] of Object.entries(storedProcesses)) {
+      try {
+        const statusResponse = await checkCompanyStatus(companyName)
+        const isCompleted = statusResponse.status === "RAG Retriever Ready"
+
+        if (isCompleted) {
+          // Remove completed processes after 24 hours
+          const hoursSinceStart = (Date.now() - processInfo.startTime) / (1000 * 60 * 60)
+          if (hoursSinceStart > 24) {
+            removeCompletedProcess(companyName)
+            continue
+          }
+        }
+
+        activeProcesses.push({
+          ...processInfo,
+          currentStatus: statusResponse.status,
+          isCompleted,
+        })
+      } catch (error) {
+        console.error(`Error checking status for ${companyName}:`, error)
+        // Keep the process in the list even if status check fails
+        activeProcesses.push({
+          ...processInfo,
+          currentStatus: "unknown",
+          isCompleted: false,
+        })
+      }
+    }
+
+    return activeProcesses
+  } catch (error) {
+    console.error("Error getting active processes:", error)
+    return []
   }
 }
 
@@ -281,7 +386,9 @@ export const getRecentCompanyActivity = async () => {
 // Get log file content
 export const getLogFile = async (logFile) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/${logFile}`)
+    // Extract just the filename if it's a full path
+    const filename = logFile.includes("/") ? logFile.split("/").pop() : logFile
+    const response = await fetch(`${API_BASE_URL}/logs/${filename}`)
     if (!response.ok) throw new Error("Failed to fetch log file")
     return await response.text()
   } catch (error) {

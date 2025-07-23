@@ -433,7 +433,7 @@ export default function ProcessingMonitor({
     );
   }
 
-  if (processes.length === 0) {
+  if (processes.length === 0 && !selectedProcess) {
     return (
       <Card>
         <CardHeader>
@@ -473,7 +473,6 @@ export default function ProcessingMonitor({
               </Button>
             </div>
           </CardTitle>
-         
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -485,7 +484,6 @@ export default function ProcessingMonitor({
                 value={selectedProcess?.company || ""}
                 onValueChange={handleProcessSelection}
               >
-                
                 <SelectContent>
                   {processes.map((process) => (
                     <SelectItem key={process.company} value={process.company}>

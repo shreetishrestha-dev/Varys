@@ -25,3 +25,9 @@ Output: "Salary was very low"
 Now, translate the following text to English if needed:
 
 {text}
+
+Output:
+    if Translation was needed
+        {{translated text}} 
+    else
+        {text}

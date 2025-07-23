@@ -1,1 +1,12 @@
-"Extract the key themes or keywords from this text (3-5 max):\n\n{text}\nKeywords:"
+Extract 3-5 key themes or keywords that best summarize the main topics of the following text.
+
+Guidelines:
+- Do NOT include any proper names, company names, or personal names.
+- Only include general topics, themes, or concepts (e.g. "customer service", "salary", "remote work", "technology", "growth").
+- Avoid generic words like "text analysis", "English language", or anything related to translation or language itself.
+- Return only the keywords, separated by commas.
+
+Text:
+{text}
+
+Keywords:

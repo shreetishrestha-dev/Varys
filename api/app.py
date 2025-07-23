@@ -22,6 +22,7 @@ import subprocess
 import os
 import time
 
+from config import DB_CONNECTION_URL
 app = FastAPI()
 
 app.add_middleware(
@@ -34,7 +35,7 @@ app.add_middleware(
 
 @app.get("/")
 def index():
-    print("db", DB_CONNECTION_URL)
+    print(DB_CONNECTION_URL)  # Debugging line to check DB connection URL
     return {"message": "Company Review API is running 🚀"}
 
 @app.get("/mentions")

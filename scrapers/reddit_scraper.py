@@ -16,6 +16,7 @@ class RedditScraper(BaseScraper):
         review_keywords = ["experience", "review", "working at", "work at", "join", "intern at", "interview at", "salary"]
 
         results = []
+        seen_hashes = set()
 
         for sub in target_subs:
             subreddit = self.reddit.subreddit(sub)
@@ -23,6 +24,13 @@ class RedditScraper(BaseScraper):
                 search_query = f"{company} {keyword}"
                 for submission in subreddit.search(search_query, sort="new", limit=limit):
                     post_text = f"{submission.title}\n\n{submission.selftext}"
+                    import hashlib
+                    unique_string = f"{submission.title}-{submission.selftext}"
+                    post_hash = hashlib.md5(unique_string.encode('utf-8')).hexdigest()
+                    if post_hash in seen_hashes:
+                        continue
+                    seen_hashes.add(post_hash)
+
                     mentions_company = company.lower() in post_text.lower()
 
                     # Extract relevant comments that mention the company

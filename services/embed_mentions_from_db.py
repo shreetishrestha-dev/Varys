@@ -3,8 +3,8 @@
 from sqlalchemy import text as sql_text
 from services.db_setup import engine
 from langchain_core.documents import Document
-from langchain.vectorstores import FAISS
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import OpenAIEmbeddings
 
 def build_vectorstore_from_db(company):
     with engine.connect() as conn:

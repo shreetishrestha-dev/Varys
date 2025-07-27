@@ -13,7 +13,7 @@ import { Textarea } from "./ui/textarea";
 import { ScrollArea } from "./ui/scroll-area";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Send, Bot, User, Sparkles } from "lucide-react";
-import { sendChatMessage, getChatHistory } from "../api/mockApi";
+import { sendChatMessage, getChatHistory } from "../api/appApi";
 
 export default function ChatInterface({ selectedCompany }) {
   const [messages, setMessages] = useState([]);

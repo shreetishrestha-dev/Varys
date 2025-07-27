@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "./ui/table";
 import { Search, Filter, Loader2 } from "lucide-react";
-import { fetchCompanyMentions } from "../api/mockApi";
+import { fetchCompanyMentions } from "../api/appApi";
 
 export default function DataView({ company }) {
   const [mentions, setMentions] = useState([]);

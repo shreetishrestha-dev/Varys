@@ -28,7 +28,7 @@ import {
   Monitor,
   X,
 } from "lucide-react";
-import { processNewCompany, checkCompanyExists } from "../api/mockApi";
+import { processNewCompany, checkCompanyExists } from "../api/appApi";
 
 export default function AddCompanyForm({
   onCompanySelect,

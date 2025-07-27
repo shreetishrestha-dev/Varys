@@ -23,7 +23,7 @@ import {
   Star,
   Loader2,
 } from "lucide-react";
-import { getDashboardStats, getRecentCompanyActivity } from "../api/mockApi";
+import { getDashboardStats, getRecentCompanyActivity } from "../api/appApi";
 
 const quickActions = [
   {

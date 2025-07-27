@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { fetchCompanies } from "../api/mockApi"
+import { fetchCompanies } from "../api/appApi"
 
 export default function CompanySelector({ selectedCompany, onCompanyChange }) {
   const [companies, setCompanies] = useState([])

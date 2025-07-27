@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "./ui/table";
 import { Search, Filter, Loader2 } from "lucide-react";
-import { fetchCompanyMentions } from "../api/mockApi";
+import { fetchCompanyMentions } from "../api/appApi";
 
 export default function DataView({ company }) {
   const [mentions, setMentions] = useState([]);
@@ -202,10 +202,10 @@ export default function DataView({ company }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Text</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Sentiment</TableHead>
-                <TableHead>Keywords</TableHead>
+                <TableHead className="text-left">Text</TableHead>
+                <TableHead className="text-left">Type</TableHead>
+                <TableHead className="text-left">Sentiment</TableHead>
+                <TableHead className="text-left">Keywords</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -213,7 +213,7 @@ export default function DataView({ company }) {
                 <TableRow>
                   <TableCell
                     colSpan={4}
-                    className="text-center py-8 text-muted-foreground"
+                    className="text-left py-8 text-muted-foreground"
                   >
                     No mentions found matching your filters
                   </TableCell>
@@ -228,18 +228,18 @@ export default function DataView({ company }) {
                       setShowModal(true);
                     }}
                   >
-                    <TableCell className="max-w-md">
-                      <div className="truncate" title={mention.text}>
+                    <TableCell className="max-w-md text-left">
+                      <div className="truncate text-left" title={mention.text}>
                         {mention.text || "No text available"}
                       </div>
                     </TableCell>
-                    <TableCell>{mention.type || "N/A"}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-left">{mention.type || "N/A"}</TableCell>
+                    <TableCell className="text-left">
                       <Badge className={getSentimentColor(mention.sentiment)}>
                         {mention.sentiment || "unknown"}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-left">
                       <div className="flex flex-wrap gap-1">
                         {(mention.keywords || []).slice(0, 3).map((keyword) => (
                           <Badge

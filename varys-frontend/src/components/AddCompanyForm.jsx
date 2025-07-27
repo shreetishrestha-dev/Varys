@@ -28,7 +28,7 @@ import {
   Monitor,
   X,
 } from "lucide-react";
-import { processNewCompany, checkCompanyExists } from "../api/mockApi";
+import { processNewCompany, checkCompanyExists } from "../api/appApi";
 
 export default function AddCompanyForm({
   onCompanySelect,
@@ -135,14 +135,19 @@ export default function AddCompanyForm({
   };
 
   // Only go to monitor tab if user clicks button in modal
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const handleGoToMonitor = () => {
+    setIsRedirecting(true);
     setShowSuccessModal(false);
     if (onCompanySelect) {
       onCompanySelect(processedCompanyName.trim());
     }
-    if (onTabChange) {
-      onTabChange("monitor");
-    }
+    setTimeout(() => {
+      setIsRedirecting(false);
+      if (onTabChange) {
+        onTabChange("monitor");
+      }
+    }, 5000);
   };
 
   const handleStayHere = () => {
@@ -311,8 +316,8 @@ export default function AddCompanyForm({
       </div>
 
       {/* Success Modal */}
-      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={showSuccessModal || isRedirecting} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-900">
           <DialogHeader>
             <div className="flex items-center space-x-2 mb-2">
               <div className="p-2 bg-green-100 rounded-full">
@@ -352,18 +357,27 @@ export default function AddCompanyForm({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={handleStayHere}
-              className="w-full sm:w-auto bg-transparent"
-            >
-              <X className="mr-2 h-4 w-4" />
-              Stay Here
-            </Button>
-            <Button onClick={handleGoToMonitor} className="w-full sm:w-auto">
-              <Monitor className="mr-2 h-4 w-4" />
-              Go to Processing Monitor
-            </Button>
+            {isRedirecting ? (
+              <div className="flex items-center justify-center w-full py-4">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin text-green-600" />
+                <span className="text-green-700 text-sm">Redirecting to Processing Monitor...</span>
+              </div>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleStayHere}
+                  className="w-full sm:w-auto bg-transparent"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Stay Here
+                </Button>
+                <Button onClick={handleGoToMonitor} className="w-full sm:w-auto">
+                  <Monitor className="mr-2 h-4 w-4" />
+                  Go to Processing Monitor
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

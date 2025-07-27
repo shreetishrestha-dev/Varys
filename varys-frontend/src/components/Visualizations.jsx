@@ -26,7 +26,7 @@ import {
   fetchMentionTypes,
   fetchKeywords,
   getRecentQuestions,
-} from "../api/mockApi";
+} from "../api/appApi";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 
 export default function Visualizations({ company }) {

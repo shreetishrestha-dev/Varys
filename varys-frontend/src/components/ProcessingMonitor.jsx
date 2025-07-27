@@ -488,23 +488,15 @@ export default function ProcessingMonitor({
 
   const getStepStatus = (step, currentStatus) => {
     if (!currentStatus) return "pending";
-
-    const currentIndex = STATUS_STEPS.findIndex(
-      (s) => s.status === currentStatus
-    );
-
-    const stepIndex = STATUS_STEPS.findIndex((s) => s.id === step.id);
-
-    // If current status is "RAG Retriever Ready", all steps including the last one should be completed
-
     if (currentStatus === "RAG Retriever Ready") {
       return "completed";
     }
-
-    if (stepIndex < currentIndex) return "completed";
-
-    if (stepIndex === currentIndex) return "processing";
-
+    const currentIndex = STATUS_STEPS.findIndex(
+      (s) => s.status === currentStatus
+    );
+    const stepIndex = STATUS_STEPS.findIndex((s) => s.id === step.id);
+    if (stepIndex < currentIndex + 1) return "completed";
+    if (stepIndex === currentIndex + 1) return "processing";
     return "pending";
   };
 

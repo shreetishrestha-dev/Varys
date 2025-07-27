@@ -37,7 +37,6 @@ export default function Dashboard() {
   const handleProcessStarted = (companyName, processInfo) => {
     // Switch to monitor tab and select the company
     setSelectedCompany(companyName);
-    setActiveTab("monitor");
   };
 
   return (

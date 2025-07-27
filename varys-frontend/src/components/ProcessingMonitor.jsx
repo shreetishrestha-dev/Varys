@@ -102,6 +102,16 @@ const STATUS_STEPS = [
 
     progress: 100,
   },
+
+  {
+    id: "completed",
+
+    name: "Completed",
+
+    status: "Completed",
+
+    progress: 100,
+  },
 ];
 
 export default function ProcessingMonitor({
@@ -159,7 +169,7 @@ export default function ProcessingMonitor({
   // Select company if provided from parent
 
   useEffect(() => {
-    if (selectedCompany && processes.length > 0) {
+    if (selectedCompany && processes.length > 0 && !selectedProcess) {
       const process = processes.find((p) => p.company === selectedCompany);
 
       if (
@@ -210,10 +220,16 @@ export default function ProcessingMonitor({
   // Auto-scroll logs to bottom
 
   useEffect(() => {
-    if (logScrollRef.current && autoRefreshLogs && logs) {
+    if (
+      logScrollRef.current &&
+      autoRefreshLogs &&
+      logs &&
+      selectedProcess &&
+      !selectedProcess.isCompleted
+    ) {
       logScrollRef.current.scrollTop = logScrollRef.current.scrollHeight;
     }
-  }, [logs, autoRefreshLogs]);
+  }, [logs, autoRefreshLogs, selectedProcess]);
 
   const loadProcesses = async () => {
     setLoading(true);
@@ -321,7 +337,7 @@ export default function ProcessingMonitor({
         setLastUpdateTime(Date.now()); // Force re-render
 
         // Always update selectedProcess with the latest info from backend
-        if (selectedProcess) {
+        if (selectedProcess && !selectedProcess.isCompleted) {
           const updatedProcess = updatedProcesses.find(
             (p) => p.company === selectedProcess.company
           );
@@ -495,18 +511,19 @@ export default function ProcessingMonitor({
       (s) => s.status === currentStatus
     );
     const stepIndex = STATUS_STEPS.findIndex((s) => s.id === step.id);
+    if (currentStatus === "RAG Retriever Ready") {
+      return "completed";
+    }
     if (stepIndex < currentIndex + 1) return "completed";
+
     if (stepIndex === currentIndex + 1) return "processing";
     return "pending";
   };
 
   const getCurrentProgress = (currentStatus) => {
     if (!currentStatus) return 0;
-
-    if (currentStatus === "RAG Retriever Ready") return 100;
-
+    if (currentStatus === "Completed") return 100;
     const currentStep = STATUS_STEPS.find((s) => s.status === currentStatus);
-
     return currentStep ? currentStep.progress : 0;
   };
 

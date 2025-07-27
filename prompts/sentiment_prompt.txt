@@ -1,16 +1,55 @@
-You are an expert at analyzing the sentiment of company reviews. Categorize each review as either positive, neutral, or negative based on its overall tone and content.
+You are an expert at analyzing user feedback and classifying the sentiment of a message about a specific company.
 
-Examples:
-Input: "The company has good growth opportunity and good projects."
-Sentiment: positive
+Sentiment options:
+- **positive**
+- **negative**
+- **neutral**
 
-Input: "The company is okay, nothing special."
-Sentiment: neutral
+Instructions:
+- Focus only on parts of the message that relate to **{company_name}**.
+- Consider the **message type** (e.g., complaint, praise, question, etc.) as a helpful signal for determining sentiment.
+- Base your classification on the **overall tone and emotional content** directed at **{company_name}**.
+- If the message includes praise, encouragement, or optimism → positive.
+- If it expresses complaints, dissatisfaction, or criticism → negative.
+- If it's neutral, factual, or seeks help without strong emotion → neutral.
+- Ignore content about other companies unless it directly affects perception of **{company_name}**.
 
-Input: "Salary was very low and management was unhelpful."
-Sentiment: negative
+---
 
-Analyze the sentiment (positive, neutral, negative) of this text:
+Inputs:
+- **Message type**: {type}  
+- **Message text**: {text}  
+- **Company**: {company_name}
+
+---
+
+
+Now classify the following text for sentiment about **{company_name}**:
 
 {text}
+
 Sentiment:
+
+---
+
+### Examples
+
+**Message type**: praise  
+**Message text**: "Cedargate is the best place I've worked."  
+**Company**: Cedargate  
+**Sentiment**: positive
+
+**Message type**: complaint  
+**Message text**: "Pay at Cedargate is bad and there's no growth."  
+**Company**: Cedargate  
+**Sentiment**: negative
+
+**Message type**: other  
+**Message text**: "Cedargate is hiring for multiple roles in QA."  
+**Company**: Cedargate  
+**Sentiment**: neutral
+
+**Message type**: opinion  
+**Message text**: "Maitri Services is great. Cedargate is okay."  
+**Company**: Cedargate  
+**Sentiment**: neutral

@@ -1,27 +1,33 @@
-Classify the following text into one of these types:
-- question
-- opinion
-- complaint
-- praise
-- other
+You are a helpful assistant that classifies user-generated text related to companies into one of the following types:
+	•	question: The text is primarily asking for advice, help, or information—even if there is no question mark.
+	•	opinion: The author shares personal beliefs, judgments, or views (e.g., “I think…”, “In my opinion…”).
+	•	complaint: The text expresses dissatisfaction or frustration about something.
+	•	praise: The text expresses appreciation or positive feedback.
+	•	other: Factual statements, descriptions, or anything that does not fall into the above categories.
 
-Questions may not always have question marks. Use the sentiment of the sentence if available to help with classification.
+Classify the overall purpose of the message, considering its dominant intent. If the text mentions multiple companies, focus on how it relates to the company ”{company_name}”. Use sentiment to aid your judgment but not as a direct proxy.
 
 Examples:
-Input: "Is there any growth opportunity in this company?"
+
+Input: “Is there any growth opportunity in this company?”
 Type: question
 
-Input: "I think the management could be better."
+Input: “I think the management could be better.”
 Type: opinion
 
-Input: "Salary was very low and management was unhelpful."
+Input: “Salary was very low and management was unhelpful.”
 Type: complaint
 
-Input: "The team is very supportive and the work culture is great."
+Input: “The team is very supportive and the work culture is great.”
 Type: praise
 
-Input: "I joined last year."
+Input: “I joined last year.”
 Type: other
 
-Text: {text}
+⸻
+
+Text:
+{text}
+Company: {company_name}
+
 Type:

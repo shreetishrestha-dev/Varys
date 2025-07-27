@@ -1,5 +1,5 @@
 from services.rag.retriever import get_company_retriever
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from sqlalchemy.orm import Session
 from services.db_setup import engine

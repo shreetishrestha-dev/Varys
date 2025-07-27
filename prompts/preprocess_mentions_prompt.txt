@@ -1,0 +1,4 @@
+You will receive an input text that may contain escape sequences such as \n, \n\n, \t, or other special characters. Your task is to preprocess this input by removing all escape sequences and special formatting, so that the output is a single, plain text string without any line breaks, tabs, or embedded formatting codes. Return only the cleaned, plain text version of the input.
+
+Input: {text}
+Processed Text:

@@ -9,37 +9,47 @@ def load_prompt(path):
     with open(path, "r") as f:
         return PromptTemplate.from_template(f.read())
 
+# Load prompts
 translate_prompt = load_prompt("prompts/translate_prompt.txt")
 classify_prompt = load_prompt("prompts/classify_prompt.txt")
 sentiment_prompt = load_prompt("prompts/sentiment_prompt.txt")
 keywords_prompt = load_prompt("prompts/keywords_prompt.txt")
 focus_company_prompt = load_prompt("prompts/focus_company_prompt.txt")
+preprocess_prompt = load_prompt("prompts/preprocess_mentions_prompt.txt")
+
+# Helper to unwrap content from AIMessage
+unwrap = RunnableLambda(lambda msg: msg.content)
 
 def get_preprocessing_chain(company_name):
-    focused_prompt = focus_company_prompt.partial(company_name=company_name)
+    preprocess_chain = preprocess_prompt | llm | unwrap
+    translate_chain = translate_prompt | llm | unwrap
+    # focused_company_prompt_chain = focus_company_prompt.partial(company_name=company_name) | llm | unwrap
+    
 
-    # Step 1: Translate
-    translate_chain = translate_prompt | llm
-
-    # Step 2: Use translated text as input to parallel tasks
-    postprocess_parallel = RunnableParallel({
-        "focused_review": focused_prompt | llm,
-        "type": classify_prompt | llm,
-        "sentiment": sentiment_prompt | llm,
-        "keywords": keywords_prompt | llm,
+    prepare_input = RunnableLambda(lambda translated: {
+        "text": translated,
+        "company_name": company_name
     })
 
-    # Step 3: Wrap translated string as {"text": ...}
-    prepare_input = RunnableLambda(lambda translated: {"text": translated})
+    type_chain = RunnableLambda(lambda d: {
+        **d,
+        "type": (classify_prompt | llm | unwrap).invoke(d)
+    })
 
-    # Step 4: Combine into full sequence with translated also returned
+    # Step 3: Feed into sentiment + keywords
+    sentiment_chain = sentiment_prompt | llm | unwrap
+    keywords_chain = keywords_prompt | llm | unwrap
+
+    postprocess_chain = type_chain | RunnableParallel({
+        "sentiment": sentiment_chain,
+        "keywords": keywords_chain
+    })
+
     full_chain = RunnableSequence(
+        preprocess_chain,
         translate_chain,
         prepare_input,
-        RunnableLambda(lambda d: {
-            "translated": d["text"],
-            **postprocess_parallel.invoke(d)
-        })
+        postprocess_chain
     )
 
     return full_chain

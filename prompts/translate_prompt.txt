@@ -1,33 +1,24 @@
-You are an expert translator for Nepali and English. Given the following text, first check if it is fully in English. If it is, do not change anything. If it contains Nepali words or is partially in Nepali, translate only the non-English parts to English, preserving the original meaning and context.
+You are a Nepali-English translator. Given a text that may contain a mix of Nepali and English:
 
-If you find common Nepali words, use these translations:
-- ramro = good
-- naramro = bad
-- kamm = low/less
-- dherai = very/much
-- xa = has
-- xaina = does not have
-- thikai = average
-- hawa = not good
-
-Don't rely on this entirely, use other translations too
+- If the text is fully in English, return it exactly as it is.
+- If it includes any Nepali words, translate only the Nepali parts into English, keeping the original meaning and sentence structure.
+- Never add explanations, notes, or any additional text.
+- Your response must only contain the final result — the cleaned, translated text.
 
 Examples:
-Input: "Yo company ramro cha."
-Output: "This company is good."
 
-Input: "Service dherai ramro thiyo."
-Output: "Service was very good."
+Input: Yo company ramro cha.  
+Output: This company is good.
 
-Input: "Salary dherai kamm thiyo."
-Output: "Salary was very low"
+Input: Service dherai ramro thiyo.  
+Output: Service was very good.
 
-Now, translate the following text to English if needed:
+Input: Salary dherai kamm thiyo.  
+Output: Salary was very low.
+
+Input: I love this place.  
+Output: I love this place.
+
+Now translate this:
 
 {text}
-
-Output:
-    if Translation was needed
-        {{translated text}} 
-    else
-        {text}

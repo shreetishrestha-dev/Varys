@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
+import { Button } from "./ui/button";
 import {
   Card,
   CardContent,
@@ -30,6 +32,8 @@ import { fetchCompanyMentions } from "../api/mockApi";
 
 export default function DataView({ company }) {
   const [mentions, setMentions] = useState([]);
+  const [selectedMention, setSelectedMention] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sentimentFilter, setSentimentFilter] = useState("all");
@@ -198,19 +202,17 @@ export default function DataView({ company }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Source</TableHead>
+                <TableHead>Text</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Sentiment</TableHead>
                 <TableHead>Keywords</TableHead>
-                <TableHead>Text</TableHead>
-                <TableHead>Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredMentions.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={4}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No mentions found matching your filters
@@ -218,9 +220,18 @@ export default function DataView({ company }) {
                 </TableRow>
               ) : (
                 filteredMentions.map((mention, index) => (
-                  <TableRow key={mention.id || index}>
-                    <TableCell className="font-medium">
-                      {mention.source || "N/A"}
+                  <TableRow
+                    key={mention.id || index}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => {
+                      setSelectedMention(mention);
+                      setShowModal(true);
+                    }}
+                  >
+                    <TableCell className="max-w-md">
+                      <div className="truncate" title={mention.text}>
+                        {mention.text || "No text available"}
+                      </div>
                     </TableCell>
                     <TableCell>{mention.type || "N/A"}</TableCell>
                     <TableCell>
@@ -246,12 +257,6 @@ export default function DataView({ company }) {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-md">
-                      <div className="truncate" title={mention.text}>
-                        {mention.text || "No text available"}
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatDate(mention.date)}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -259,6 +264,52 @@ export default function DataView({ company }) {
           </Table>
         </div>
       </CardContent>
+    {/* Mention Details Modal */}
+    <Dialog open={showModal} onOpenChange={setShowModal}>
+      <DialogContent className="max-w-lg bg-white dark:bg-zinc-900">
+        <DialogHeader>
+          <DialogTitle>Mention Details</DialogTitle>
+        </DialogHeader>
+        {selectedMention && (
+          <div className="space-y-4">
+            <div>
+              <span className="font-semibold">Text:</span>
+              <div className="mt-1 p-2 bg-muted rounded text-sm whitespace-pre-line">
+                {selectedMention.text || "No text available"}
+              </div>
+            </div>
+            <div>
+              <span className="font-semibold">Type:</span> {selectedMention.type || "N/A"}
+            </div>
+            <div>
+              <span className="font-semibold">Sentiment:</span>{" "}
+              <Badge className={getSentimentColor(selectedMention.sentiment)}>
+                {selectedMention.sentiment || "unknown"}
+              </Badge>
+            </div>
+            <div>
+              <span className="font-semibold">Keywords:</span>{" "}
+              {selectedMention.keywords && selectedMention.keywords.length > 0 ? (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedMention.keywords.map((keyword) => (
+                    <Badge key={keyword} variant="outline" className="text-xs">
+                      {keyword}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-muted-foreground">None</span>
+              )}
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button onClick={() => setShowModal(false)} variant="outline">
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </Card>
   );
 }

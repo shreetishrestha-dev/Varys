@@ -28,6 +28,7 @@ import {
   Plus,
   Monitor,
 } from "lucide-react";
+import icon from '../assets/icon.png';
 
 export default function Dashboard() {
   const [selectedCompany, setSelectedCompany] = useState("");
@@ -51,7 +52,13 @@ export default function Dashboard() {
               navigate("/");
             }}
           >
-            <Building2 className="mr-2 h-6 w-6" />
+            <img
+              src={icon}
+              alt="Varys Logo"
+              width={50}
+              height={50}
+              className="mr-2"
+            />
             <h1 className="text-xl font-semibold">Varys</h1>
           </div>
         </div>

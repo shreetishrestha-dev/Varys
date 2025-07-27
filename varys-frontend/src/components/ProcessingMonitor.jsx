@@ -133,22 +133,17 @@ export default function ProcessingMonitor({
 
   const [error, setError] = useState("");
 
-  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now()); // Force re-render trigger
-
+  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const statusPollingRef = useRef(null);
 
   const logPollingRef = useRef(null);
 
   const logScrollRef = useRef(null);
 
-  // Calculate the latest process data - moved outside JSX for better React reconciliation
-
   const latestProcess = selectedProcess
     ? processes.find((p) => p.company === selectedProcess.company) ||
       selectedProcess
     : null;
-
-  // Cleanup polling on unmount
 
   useEffect(() => {
     return () => {
@@ -158,15 +153,11 @@ export default function ProcessingMonitor({
     };
   }, []);
 
-  // Load processes on mount
-
   useEffect(() => {
     loadProcesses();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Select company if provided from parent
 
   useEffect(() => {
     if (selectedCompany && processes.length > 0 && !selectedProcess) {
@@ -181,14 +172,8 @@ export default function ProcessingMonitor({
     }
   }, [selectedCompany, processes, selectedProcess]);
 
-  // Start log polling when process is selected or changed
-
   useEffect(() => {
-    // Clear existing logs when switching processes
-
     setLogs("");
-
-    // Stop any existing log polling
 
     if (logPollingRef.current) {
       console.log("Stopping previous log polling");
@@ -201,12 +186,8 @@ export default function ProcessingMonitor({
     if (selectedProcess && selectedProcess.log_file) {
       console.log("Starting new log polling for:", selectedProcess.company);
 
-      // Start polling for the new process
-
       startLogPolling(selectedProcess.log_file);
     }
-
-    // Cleanup function to stop polling when selectedProcess changes
 
     return () => {
       if (logPollingRef.current) {
@@ -215,9 +196,7 @@ export default function ProcessingMonitor({
         logPollingRef.current = null;
       }
     };
-  }, [selectedProcess]); // Watch selectedProcess object
-
-  // Auto-scroll logs to bottom
+  }, [selectedProcess]);
 
   useEffect(() => {
     if (
@@ -236,15 +215,13 @@ export default function ProcessingMonitor({
     setError("");
     try {
       const activeProcesses = await getActiveProcesses();
-      // Force new object references to ensure React detects changes
       const processesWithNewRefs = activeProcesses.map((process) => ({
         ...process,
       }));
 
       setProcesses(processesWithNewRefs);
-      setLastUpdateTime(Date.now()); // Force re-render
+      setLastUpdateTime(Date.now());
 
-      // Always update selectedProcess with the latest info from backend
       if (selectedProcess) {
         const updatedProcess = processesWithNewRefs.find(
           (p) => p.company === selectedProcess.company
@@ -252,14 +229,12 @@ export default function ProcessingMonitor({
         if (updatedProcess) {
           setSelectedProcess({ ...updatedProcess });
         } else {
-          // If the selected process is no longer active, clear selection
           setSelectedProcess(null);
         }
       } else if (processesWithNewRefs.length > 0) {
         setSelectedProcess({ ...processesWithNewRefs[0] });
       }
 
-      // ALWAYS start status polling after processes are loaded, regardless of count
       console.log("Starting status polling after loading processes");
       startStatusPolling(processesWithNewRefs);
     } catch (err) {
@@ -282,7 +257,6 @@ export default function ProcessingMonitor({
       try {
         console.log("=== STATUS POLLING TICK ===");
 
-        // Get current processes from state
         const currentProcesses =
           processes.length > 0 ? processes : initialProcesses;
 
@@ -296,7 +270,6 @@ export default function ProcessingMonitor({
           currentProcesses.map((p) => p.company)
         );
 
-        // Get fresh status for each process
         const updatedProcesses = await Promise.all(
           currentProcesses.map(async (process) => {
             try {
@@ -318,7 +291,6 @@ export default function ProcessingMonitor({
                 `❌ Error checking status for ${process.company}:`,
                 error
               );
-              // Keep the old process data if status check fails
               return { ...process };
             }
           })
@@ -333,10 +305,9 @@ export default function ProcessingMonitor({
           }))
         );
 
-        setProcesses([...updatedProcesses]); // Force new array reference
-        setLastUpdateTime(Date.now()); // Force re-render
+        setProcesses([...updatedProcesses]);
+        setLastUpdateTime(Date.now());
 
-        // Always update selectedProcess with the latest info from backend
         if (selectedProcess && !selectedProcess.isCompleted) {
           const updatedProcess = updatedProcesses.find(
             (p) => p.company === selectedProcess.company
@@ -349,10 +320,8 @@ export default function ProcessingMonitor({
                 newStatus: updatedProcess.currentStatus,
               }
             );
-            // Always create new object reference to force re-render
             setSelectedProcess({ ...updatedProcess });
 
-            // Stop status polling if the selected process is completed
             if (updatedProcess.isCompleted && !selectedProcess.isCompleted) {
               console.log(
                 `✅ Process ${updatedProcess.company} completed, stopping polling`
@@ -369,7 +338,6 @@ export default function ProcessingMonitor({
           setSelectedProcess({ ...updatedProcesses[0] });
         }
 
-        // If all processes are completed, stop polling
         const hasActiveProcesses = updatedProcesses.some((p) => !p.isCompleted);
         if (!hasActiveProcesses) {
           console.log("🏁 All processes completed, stopping status polling");
@@ -381,21 +349,15 @@ export default function ProcessingMonitor({
       } catch (error) {
         console.error("❌ Error in status polling:", error);
       }
-    }, 5000); // Poll every 5 seconds for more responsive updates
+    }, 5000);
   };
 
   const startLogPolling = (logFile) => {
     console.log("Starting log polling for:", logFile);
 
-    // Initial log fetch
-
     fetchLogs(logFile);
 
-    // Only start polling if the process is not completed
-
     if (selectedProcess && !selectedProcess.isCompleted) {
-      // Set up periodic log fetching
-
       logPollingRef.current = setInterval(() => {
         if (
           autoRefreshLogs &&
@@ -404,8 +366,6 @@ export default function ProcessingMonitor({
         ) {
           fetchLogs(logFile);
         } else if (selectedProcess && selectedProcess.isCompleted) {
-          // Stop log polling if process is completed
-
           console.log(
             `Process for ${selectedProcess.company} is completed, stopping log polling`
           );
@@ -458,11 +418,7 @@ export default function ProcessingMonitor({
 
       console.log("Previous log file:", selectedProcess?.log_file);
 
-      // Clear logs immediately to prevent showing wrong logs
-
       setLogs("");
-
-      // Stop any existing polling
 
       if (logPollingRef.current) {
         clearInterval(logPollingRef.current);
@@ -470,11 +426,7 @@ export default function ProcessingMonitor({
         logPollingRef.current = null;
       }
 
-      // Set the new process with new object reference
-
       setSelectedProcess({ ...process });
-
-      // Force immediate log fetch for new process
 
       if (process.log_file) {
         console.log("Force fetching logs for:", process.log_file);
@@ -627,7 +579,6 @@ export default function ProcessingMonitor({
     console.log("🔄 Manual refresh triggered");
     await loadProcesses();
 
-    // Also manually check status for selected process if available
     if (selectedProcess) {
       try {
         console.log(`🔄 Manual status check for ${selectedProcess.company}`);
@@ -645,7 +596,6 @@ export default function ProcessingMonitor({
 
         setSelectedProcess(updatedProcess);
 
-        // Update in processes array too
         setProcesses((prev) =>
           prev.map((p) =>
             p.company === selectedProcess.company ? updatedProcess : p
@@ -658,7 +608,6 @@ export default function ProcessingMonitor({
       }
     }
 
-    // Also refresh logs if we have a selected process
     if (selectedProcess && selectedProcess.log_file) {
       console.log("🔄 Also refreshing logs for:", selectedProcess.company);
       fetchLogs(selectedProcess.log_file);
@@ -707,8 +656,6 @@ export default function ProcessingMonitor({
 
   return (
     <div className="space-y-6">
-      {/* Process Selector */}
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -774,8 +721,6 @@ export default function ProcessingMonitor({
               </Select>
             </div>
 
-            {/* Process Overview */}
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {processes.map((process) => (
                 <Card
@@ -827,8 +772,6 @@ export default function ProcessingMonitor({
           </div>
         </CardContent>
       </Card>
-
-      {/* Selected Process Details and Log Controls */}
 
       {latestProcess && (
         <>
@@ -926,8 +869,6 @@ export default function ProcessingMonitor({
               </div>
             </CardContent>
           </Card>
-
-          {/* Log Controls */}
 
           <Card>
             <CardHeader>

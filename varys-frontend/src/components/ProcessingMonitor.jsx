@@ -349,7 +349,7 @@ export default function ProcessingMonitor({
       } catch (error) {
         console.error("❌ Error in status polling:", error);
       }
-    }, 5000);
+    }, 15000);
   };
 
   const startLogPolling = (logFile) => {
@@ -376,7 +376,7 @@ export default function ProcessingMonitor({
             logPollingRef.current = null;
           }
         }
-      }, 5000);
+      }, 15000);
     }
   };
 

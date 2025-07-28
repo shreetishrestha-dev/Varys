@@ -23,4 +23,4 @@ typing-extensions
 pytest
 psycopg2
 langchain_community
-faiss
+faiss-cpu

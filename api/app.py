@@ -35,7 +35,6 @@ app.add_middleware(
 
 @app.get("/")
 def index():
-    print(DB_CONNECTION_URL)  # Debugging line to check DB connection URL
     return {"message": "Company Review API is running 🚀"}
 
 @app.get("/mentions")

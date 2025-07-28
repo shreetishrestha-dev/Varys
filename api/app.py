@@ -27,7 +27,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "varysnp.netlify.app"],
+    allow_origins=["http://localhost:5173", "https://varysnp.netlify.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
